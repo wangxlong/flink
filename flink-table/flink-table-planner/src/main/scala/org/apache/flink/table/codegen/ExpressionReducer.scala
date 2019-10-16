@@ -104,7 +104,9 @@ class ExpressionReducer(config: TableConfig)
       new Configuration()
     }
     // generate MapFunction
-    val generator = new ConstantFunctionCodeGenerator(config, false, EMPTY_ROW_INFO, new ConstantFunctionContext(parameters), "parameters")
+    val generator = new ConstantFunctionCodeGenerator(config,
+      false, EMPTY_ROW_INFO,
+      new ConstantFunctionContext(parameters), "parameters")
 
     val result = generator.generateResultExpression(
       resultType,
@@ -228,8 +230,8 @@ class ConstantFunctionCodeGenerator(config: TableConfig,
                                     parameters: String = null)
   extends FunctionCodeGenerator(config, nullableInput, input1) {
 
-  override def addReusableFunction(function: UserDefinedFunction, contextTerm: String = null): String = {
-
+  override def addReusableFunction(function: UserDefinedFunction,
+                                   contextTerm: String = null): String = {
 
     val classQualifier = function.getClass.getCanonicalName
     val functionSerializedData = EncodingUtils.encodeObjectToString(function)
