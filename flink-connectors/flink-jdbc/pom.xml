@@ -36,6 +36,14 @@ under the License.
 	<packaging>jar</packaging>
 
 	<dependencies>
+
+		<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+		 <dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.48</version>
+		 </dependency>
+
 		<!-- Table ecosystem -->
 		<!-- Projects depending on this project won't depend on flink-table-*. -->
 		<dependency>

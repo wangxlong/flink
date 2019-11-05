@@ -87,13 +87,13 @@ abstract class CommonLookupJoin(
   extends SingleRel(cluster, traitSet, input)
   with FlinkRelNode {
 
-  val joinKeyPairs: Array[IntPair] = getTemporalTableJoinKeyPairs(joinInfo, calcOnTemporalTable)
-  // all potential index keys, mapping from field index in table source to LookupKey
-  val allLookupKeys: Map[Int, LookupKey] = analyzeLookupKeys(
-    cluster.getRexBuilder,
-    joinKeyPairs,
-    tableSource.getTableSchema,
-    calcOnTemporalTable)
+//  val joinKeyPairs: Array[IntPair] = getTemporalTableJoinKeyPairs(joinInfo, calcOnTemporalTable)
+//  // all potential index keys, mapping from field index in table source to LookupKey
+//  val allLookupKeys: Map[Int, LookupKey] = analyzeLookupKeys(
+//    cluster.getRexBuilder,
+//    joinKeyPairs,
+//    tableSource.getTableSchema,
+//    calcOnTemporalTable)
 
   if (containsPythonCall(joinInfo.getRemaining(cluster.getRexBuilder))) {
     throw new TableException("Only inner join condition with equality predicates supports the " +
@@ -161,6 +161,14 @@ abstract class CommonLookupJoin(
       config: TableConfig,
       relBuilder: RelBuilder): Transformation[BaseRow] = {
 
+    val joinKeyPairs: Array[IntPair] = getTemporalTableJoinKeyPairs(joinInfo, calcOnTemporalTable, tableSource)
+    // all potential index keys, mapping from field index in table source to LookupKey
+    val allLookupKeys: Map[Int, LookupKey] = analyzeLookupKeys(
+      cluster.getRexBuilder,
+      joinKeyPairs,
+      tableSource.getTableSchema,
+      calcOnTemporalTable)
+
     val inputRowType = FlinkTypeFactory.toLogicalRowType(input.getRowType)
     val tableSourceRowType = FlinkTypeFactory.toLogicalRowType(tableRowType)
     val resultRowType = FlinkTypeFactory.toLogicalRowType(getRowType)
@@ -175,6 +183,7 @@ abstract class CommonLookupJoin(
       inputRowType,
       tableSourceRowType,
       allLookupKeys,
+      joinKeyPairs,
       joinType)
 
     val lookupFieldsInOrder = allLookupKeys.keys.toList.sorted.toArray
@@ -457,7 +466,8 @@ abstract class CommonLookupJoin(
     */
   private def getTemporalTableJoinKeyPairs(
       joinInfo: JoinInfo,
-      calcOnTemporalTable: Option[RexProgram]): Array[IntPair] = {
+      calcOnTemporalTable: Option[RexProgram],
+      tableSource: TableSource[_]): Array[IntPair] = {
     val joinPairs = joinInfo.pairs().asScala.toArray
     calcOnTemporalTable match {
       case Some(program) =>
@@ -466,6 +476,11 @@ abstract class CommonLookupJoin(
         joinPairs.map {
           p =>
             val calcSrcIdx = getIdenticalSourceField(program, p.target)
+            if (calcSrcIdx == -1) {
+              throw new TableException(
+                "Temporal table join requires an equality condition on fields of " +
+                  s"table [${tableSource.explainSource()}].")
+            }
             if (calcSrcIdx != -1) {
               keyPairs += new IntPair(p.source, calcSrcIdx)
             }
@@ -566,14 +581,15 @@ abstract class CommonLookupJoin(
       inputRowType: RowType,
       tableSourceRowType: RowType,
       allLookupKeys: Map[Int, LookupKey],
+      joinKeyPairs: Array[IntPair],
       joinType: JoinRelType): Unit = {
 
     // check join on all fields of PRIMARY KEY or (UNIQUE) INDEX
-    if (allLookupKeys.isEmpty) {
-      throw new TableException(
-        "Temporal table join requires an equality condition on fields of " +
-          s"table [${tableSource.explainSource()}].")
-    }
+//    if (allLookupKeys.isEmpty) {
+//      throw new TableException(
+//        "Temporal table join requires an equality condition on fields of " +
+//          s"table [${tableSource.explainSource()}].")
+//    }
 
     if (!tableSource.isInstanceOf[LookupableTableSource[_]]) {
       throw new TableException(s"TableSource of [${tableSource.explainSource()}] must " +

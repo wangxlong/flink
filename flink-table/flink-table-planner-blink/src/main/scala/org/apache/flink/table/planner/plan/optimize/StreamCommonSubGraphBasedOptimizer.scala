@@ -35,12 +35,12 @@ import org.apache.flink.table.planner.utils.TableConfigUtils
 import org.apache.flink.table.planner.utils.TableConfigUtils.getMillisecondFromConfigDuration
 import org.apache.flink.table.sinks.RetractStreamTableSink
 import org.apache.flink.util.Preconditions
-
 import org.apache.calcite.rel.RelNode
 import org.apache.calcite.rel.core.TableScan
 import org.apache.calcite.rex.RexBuilder
-
 import java.util
+
+import org.apache.calcite.plan.RelOptUtil
 
 import scala.collection.JavaConversions._
 
@@ -163,7 +163,7 @@ class StreamCommonSubGraphBasedOptimizer(planner: StreamPlanner)
       .getOrElse(FlinkStreamProgram.buildProgram(config.getConfiguration))
     Preconditions.checkNotNull(programs)
 
-    programs.optimize(relNode, new StreamOptimizeContext() {
+    val opRelNode = programs.optimize(relNode, new StreamOptimizeContext() {
 
       override def getTableConfig: TableConfig = config
 
@@ -177,6 +177,8 @@ class StreamCommonSubGraphBasedOptimizer(planner: StreamPlanner)
 
       override def needFinalTimeIndicatorConversion: Boolean = true
     })
+    println("optimize: " + RelOptUtil.toString(opRelNode))
+    opRelNode
   }
 
   /**

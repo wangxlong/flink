@@ -500,6 +500,12 @@ under the License.
 				</exclusion>
 			</exclusions>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.flink</groupId>
+			<artifactId>flink-jdbc_2.11</artifactId>
+			<version>1.10-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
 
 	</dependencies>
 
