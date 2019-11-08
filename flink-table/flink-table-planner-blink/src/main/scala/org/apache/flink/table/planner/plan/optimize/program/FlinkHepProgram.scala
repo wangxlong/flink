@@ -53,8 +53,9 @@ class FlinkHepProgram[OC <: FlinkOptimizeContext] extends FlinkOptimizeProgram[O
       throw new TableException("hepProgram should not be None in FlinkHepProgram")
     }
 
+    val planner = new HepPlanner(hepProgram.get, context)
     try {
-      val planner = new HepPlanner(hepProgram.get, context)
+
       FlinkRelMdNonCumulativeCost.THREAD_PLANNER.set(planner)
 
       planner.setRoot(root)
@@ -67,7 +68,9 @@ class FlinkHepProgram[OC <: FlinkOptimizeContext] extends FlinkOptimizeProgram[O
       }
 
       planner.findBestExp
-    }  finally {
+
+    } finally {
+      println("-----" + planner.getRules.toString)
       FlinkRelMdNonCumulativeCost.THREAD_PLANNER.remove()
     }
   }

@@ -88,7 +88,8 @@ public class DimensionJoin {
 
 		String sql = "INSERT INTO RubberOrders SELECT o.amount, lower(o.currency), r.amount,r.product, upper(r.product) \n" +
 			"FROM Orders AS o   left join mysqlid FOR SYSTEM_TIME AS OF o.proctime as r\n" +
-			"on  o.currency = r.product and r.product = 'q'" ;
+			"on  o.amount = 1 and o.currency = concat(r.product, 'r')" ;
+		System.out.println(sql);
 
 		tableEnv.sqlUpdate(sql);
 

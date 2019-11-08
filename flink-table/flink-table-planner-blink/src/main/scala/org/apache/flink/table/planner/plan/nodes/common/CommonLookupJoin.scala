@@ -428,7 +428,26 @@ abstract class CommonLookupJoin(
       joinKeyPairs: Array[IntPair],
       joinInfo: JoinInfo,
       allLookupKeys: Map[Int, LookupKey]): Option[RexNode] = {
-    val remainingPairs = joinKeyPairs.filter(p => !checkedLookupFields.contains(p.target))
+    var remainingPairs = joinKeyPairs.filter(p => !checkedLookupFields.contains(p.target))
+
+//    val joinPairs = joinInfo.pairs().asScala.toArray
+//    val joinAnds = joinPairs.map { p =>
+//      val leftFieldType = leftRelDataType.getFieldList.get(p.source).getType
+//      val leftInputRef = new RexInputRef(p.source, leftFieldType)
+//      val rightInputRef = calcOnTemporalTable match {
+//        case Some(program) =>
+//          new RexInputRef(
+//            leftRelDataType.getFieldCount + p.target,
+//            program.getOutputRowType.getFieldList.get(p.target).getType)
+//
+//        case None =>
+//          new RexInputRef(
+//            leftRelDataType.getFieldCount + p.target,
+//            tableRelDataType.getFieldList.get(p.target).getType)
+//      }
+//      (leftInputRef, rightInputRef)
+//    }
+
     // convert remaining pairs to RexInputRef tuple for building sqlStdOperatorTable.EQUALS calls
     val remainingAnds = remainingPairs.map { p =>
       val leftFieldType = leftRelDataType.getFieldList.get(p.source).getType
@@ -450,6 +469,7 @@ abstract class CommonLookupJoin(
       (leftInputRef, rightInputRef)
     }
     val equiAnds = relBuilder.and(remainingAnds.map(p => relBuilder.equals(p._1, p._2)): _*)
+//    val joinEquiAnds = relBuilder.and(joinAnds.map(p => relBuilder.equals(p._1, p._2)): _*)
     val condition = relBuilder.and(equiAnds, joinInfo.getRemaining(rexBuilder))
     if (condition.isAlwaysTrue) {
       None
@@ -476,11 +496,11 @@ abstract class CommonLookupJoin(
         joinPairs.map {
           p =>
             val calcSrcIdx = getIdenticalSourceField(program, p.target)
-            if (calcSrcIdx == -1) {
-              throw new TableException(
-                "Temporal table join requires an equality condition on fields of " +
-                  s"table [${tableSource.explainSource()}].")
-            }
+//            if (calcSrcIdx == -1) {
+//              throw new TableException(
+//                "Temporal table join requires an equality condition on fields of " +
+//                  s"table [${tableSource.explainSource()}].")
+//            }
             if (calcSrcIdx != -1) {
               keyPairs += new IntPair(p.source, calcSrcIdx)
             }
@@ -525,6 +545,9 @@ abstract class CommonLookupJoin(
 
   // this is highly inspired by Calcite's RexProgram#getSourceField(int)
   private def getIdenticalSourceField(rexProgram: RexProgram, outputOrdinal: Int): Int = {
+
+    val fieldsNames = rexProgram.getInputRowType.getFieldNames
+
     assert((outputOrdinal >= 0) && (outputOrdinal < rexProgram.getProjectList.size()))
     val project = rexProgram.getProjectList.get(outputOrdinal)
     var index = project.getIndex
@@ -537,7 +560,10 @@ abstract class CommonLookupJoin(
         case call: RexCall if call.getOperator == SqlStdOperatorTable.CAST =>
           // drill through identity function
           expr = call.getOperands.get(0)
-        case _ =>
+//        case call: RexCall => {
+//          expr = call.getOperands.get(0)
+//        }
+        case _=>
       }
       expr match {
         case ref: RexLocalRef => index = ref.getIndex
@@ -584,12 +610,12 @@ abstract class CommonLookupJoin(
       joinKeyPairs: Array[IntPair],
       joinType: JoinRelType): Unit = {
 
-    // check join on all fields of PRIMARY KEY or (UNIQUE) INDEX
-//    if (allLookupKeys.isEmpty) {
-//      throw new TableException(
-//        "Temporal table join requires an equality condition on fields of " +
-//          s"table [${tableSource.explainSource()}].")
-//    }
+//     check join on all fields of PRIMARY KEY or (UNIQUE) INDEX
+    if (allLookupKeys.isEmpty) {
+      throw new TableException(
+        "Temporal table join requires an equality condition on fields of " +
+          s"table [${tableSource.explainSource()}].")
+    }
 
     if (!tableSource.isInstanceOf[LookupableTableSource[_]]) {
       throw new TableException(s"TableSource of [${tableSource.explainSource()}] must " +
