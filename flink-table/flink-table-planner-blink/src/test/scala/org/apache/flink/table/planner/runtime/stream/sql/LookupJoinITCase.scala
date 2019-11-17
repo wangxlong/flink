@@ -54,7 +54,9 @@ class LookupJoinITCase extends StreamingTestBase {
   val userData = List(
     (11, 1L, "Julian"),
     (22, 2L, "Jark"),
-    (33, 3L, "Fabian"))
+    (33, 3L, "Fabian"),
+    (11, 4L, "Hello world"),
+    (11, 5L, "Hello world"))
 
   val userTableSource = InMemoryLookupableTableSource.builder()
     .data(userData)
@@ -62,6 +64,21 @@ class LookupJoinITCase extends StreamingTestBase {
     .field("id", Types.LONG)
     .field("name", Types.STRING)
     .build()
+
+
+//  val userDataWithSameAge = List(
+//    (11, 1L, "Julian"),
+//    (22, 2L, "Jark"),
+//    (33, 3L, "Fabian")
+//    (11, 4L, "Hello world")
+//  )
+//
+//  val userWithSameAgeTableSourceWith2Keys = InMemoryLookupableTableSource.builder()
+//    .data(userDataWithSameAge)
+//    .field("age", Types.INT)
+//    .field("id", Types.LONG)
+//    .field("name", Types.STRING)
+//    .build()
 
   val userTableSourceWith2Keys = InMemoryLookupableTableSource.builder()
     .data(userData)
@@ -190,6 +207,7 @@ class LookupJoinITCase extends StreamingTestBase {
     tEnv.sqlQuery(sql).toAppendStream[Row].addSink(sink)
     env.execute()
 
+    println(sink.getAppendResults.sorted.toString())
     val expected = Seq(
       "2,15,Hello,Jark",
       "3,15,Fabian,Fabian")
@@ -514,5 +532,29 @@ class LookupJoinITCase extends StreamingTestBase {
     assertTrue(sink.getAppendResults.isEmpty)
     assertEquals(0, userTableSourceWith2Keys.getResourceCounter)
   }
+
+
+  @Test
+  def testJoinTemporalTableOnMultiKeyFieldsWithUDF(): Unit = {
+    val streamTable = env.fromCollection(data)
+      .toTable(tEnv, 'id, 'len, 'content, 'proctime.proctime)
+    tEnv.registerTable("T", streamTable)
+
+    tEnv.registerTableSource("userTable", userTableSource)
+
+    val sql = "SELECT T.id, T.content, D.age, D.id FROM T JOIN userTable " +
+      "for system_time as of T.proctime AS D " +
+      "ON T.id = D.id + 4 AND T.content = concat(D.name, '!') AND D.age = 11"
+
+    val sink = new TestingAppendSink
+    tEnv.sqlQuery(sql).toAppendStream[Row].addSink(sink)
+    env.execute()
+
+    val expected = Seq(
+      "9,Hello world!,11,5")
+    assertEquals(expected.sorted, sink.getAppendResults.sorted)
+    assertEquals(0, userTableSource.getResourceCounter)
+  }
+
 
 }

@@ -60,7 +60,7 @@ public class DimensionJoin {
 
 		// create and register a TableSink
 		String tableCsvSinkDDL = "create table RubberOrders(\n" +
-			"                        a INT,\n" +
+			"                        a DOUBLE,\n" +
 			"                        b varchar,\n" +
 			"						 c int,\n" +
 			"						 d varchar,\n" +
@@ -69,7 +69,7 @@ public class DimensionJoin {
 			"                        'connector.type' = 'filesystem',\n" +
 			"                        'format.type' = 'csv',\n" +
 			"                        'connector.path' = '/Users/didi/Desktop/ddl/whl.txt',\n" +
-			"						 'format.fields.0.type' = 'INT'," +
+			"						 'format.fields.0.type' = 'DOUBLE'," +
 			" 'connector.property-version' = '1', "+
 			"'format.fields.0.name' = 'a'," +
 			" 'format.fields.1.type' = 'STRING'," +
@@ -86,9 +86,9 @@ public class DimensionJoin {
 			")";
 		tableEnv.sqlUpdate(tableCsvSinkDDL);
 
-		String sql = "INSERT INTO RubberOrders SELECT o.amount, lower(o.currency), r.amount,r.product, upper(r.product) \n" +
+		String sql = "INSERT INTO RubberOrders SELECT rand(), lower(o.currency), r.amount,r.product, upper(r.product) \n" +
 			"FROM Orders AS o   left join mysqlid FOR SYSTEM_TIME AS OF o.proctime as r\n" +
-			"on  o.amount = 1 and o.currency = concat(r.product, 'r')" ;
+			"on  o.amount = 1 and o.currency = r.product where r.amount > 1" ;
 		System.out.println(sql);
 
 		tableEnv.sqlUpdate(sql);

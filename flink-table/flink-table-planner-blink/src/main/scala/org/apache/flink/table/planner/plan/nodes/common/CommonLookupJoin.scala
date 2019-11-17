@@ -428,17 +428,49 @@ abstract class CommonLookupJoin(
       joinKeyPairs: Array[IntPair],
       joinInfo: JoinInfo,
       allLookupKeys: Map[Int, LookupKey]): Option[RexNode] = {
-    var remainingPairs = joinKeyPairs.filter(p => !checkedLookupFields.contains(p.target))
 
-//    val joinPairs = joinInfo.pairs().asScala.toArray
-//    val joinAnds = joinPairs.map { p =>
+
+
+    var remainingAnds = Seq[(RexInputRef, RexInputRef)]()
+
+    if (calcOnTemporalTable.isDefined) {
+
+      val program = calcOnTemporalTable.get
+
+      val joinPairs = joinInfo.pairs().asScala.toArray
+      val checkedCalFields = checkedLookupFields.map { lookupFieldIndex =>
+        program
+          .getOutputRowType.getFieldNames
+          .indexOf(program.getInputRowType.getFieldNames.get(lookupFieldIndex))
+      }
+
+      val remainingPairs = joinPairs.filter(p => !checkedCalFields.contains(p.target))
+
+      remainingPairs.map { p =>
+
+        val leftFieldType = leftRelDataType.getFieldList.get(p.source).getType
+        val leftInputRef = new RexInputRef(p.source, leftFieldType)
+        val rightInputRef = new RexInputRef(leftRelDataType.getFieldCount + p.target,
+          program.getOutputRowType.getFieldList.get(p.target).getType)
+
+        remainingAnds = remainingAnds :+  (leftInputRef, rightInputRef)
+      }
+    }
+
+//    var remainingPairs = joinKeyPairs.filter(p => !checkedLookupFields.contains(p.target))
+//
+//    // convert remaining pairs to RexInputRef tuple for building sqlStdOperatorTable.EQUALS calls
+//    val remainingAnds = remainingPairs.map { p =>
 //      val leftFieldType = leftRelDataType.getFieldList.get(p.source).getType
 //      val leftInputRef = new RexInputRef(p.source, leftFieldType)
 //      val rightInputRef = calcOnTemporalTable match {
 //        case Some(program) =>
+//          val rightKeyIdx = program
+//            .getOutputRowType.getFieldNames
+//            .indexOf(program.getInputRowType.getFieldNames.get(p.target))
 //          new RexInputRef(
-//            leftRelDataType.getFieldCount + p.target,
-//            program.getOutputRowType.getFieldList.get(p.target).getType)
+//            leftRelDataType.getFieldCount + rightKeyIdx,
+//            program.getOutputRowType.getFieldList.get(rightKeyIdx).getType)
 //
 //        case None =>
 //          new RexInputRef(
@@ -448,26 +480,8 @@ abstract class CommonLookupJoin(
 //      (leftInputRef, rightInputRef)
 //    }
 
-    // convert remaining pairs to RexInputRef tuple for building sqlStdOperatorTable.EQUALS calls
-    val remainingAnds = remainingPairs.map { p =>
-      val leftFieldType = leftRelDataType.getFieldList.get(p.source).getType
-      val leftInputRef = new RexInputRef(p.source, leftFieldType)
-      val rightInputRef = calcOnTemporalTable match {
-        case Some(program) =>
-          val rightKeyIdx = program
-            .getOutputRowType.getFieldNames
-            .indexOf(program.getInputRowType.getFieldNames.get(p.target))
-          new RexInputRef(
-            leftRelDataType.getFieldCount + rightKeyIdx,
-            program.getOutputRowType.getFieldList.get(rightKeyIdx).getType)
 
-        case None =>
-          new RexInputRef(
-            leftRelDataType.getFieldCount + p.target,
-            tableRelDataType.getFieldList.get(p.target).getType)
-      }
-      (leftInputRef, rightInputRef)
-    }
+
     val equiAnds = relBuilder.and(remainingAnds.map(p => relBuilder.equals(p._1, p._2)): _*)
 //    val joinEquiAnds = relBuilder.and(joinAnds.map(p => relBuilder.equals(p._1, p._2)): _*)
     val condition = relBuilder.and(equiAnds, joinInfo.getRemaining(rexBuilder))

@@ -341,10 +341,12 @@ abstract class TableTestUtilBase(test: TableTestBase, isStreamingMode: Boolean) 
           relNode,
           SqlExplainLevel.DIGEST_ATTRIBUTES,
           withRowType = withRowType)
+      println(planBefore)
       assertEqualsOrExpand("planBefore", planBefore)
     }
 
     val actual = SystemUtils.LINE_SEPARATOR + optimizedPlan
+    print(actual)
     assertEqualsOrExpand("planAfter", actual.toString, expand = false)
   }
 

@@ -98,6 +98,7 @@ class LookupJoinTest extends TableTestBase with Serializable {
         "left table's proctime field, doesn't support 'PROCTIME()'",
       classOf[TableException]
     )
+
   }
 
   @Test
@@ -347,6 +348,45 @@ class LookupJoinTest extends TableTestBase with Serializable {
         |JOIN temporalTest FOR SYSTEM_TIME AS OF T.proctime AS D
         |ON true
         |WHERE T.c > 1000
+      """.stripMargin
+
+    streamUtil.verifyPlan(sql)
+  }
+
+  @Test
+  def testJoinTemporalTableWithUDFANDConstantCondition(): Unit = {
+
+    val sql =
+      """
+        |SELECT * FROM MyTable AS T
+        |JOIN temporalTest FOR SYSTEM_TIME AS OF T.proctime AS D
+        |ON T.b = concat(D.name, '!') AND D.age = 11
+      """.stripMargin
+
+    streamUtil.verifyPlan(sql)
+  }
+
+  @Test
+  def testJoinTemporalTableWithMultiUDFANDConstantCondition(): Unit = {
+
+    val sql =
+      """
+        |SELECT * FROM MyTable AS T
+        |JOIN temporalTest FOR SYSTEM_TIME AS OF T.proctime AS D
+        |ON T.a = D.id + 1 AND T.b = concat(D.name, '!') AND D.age = 11
+      """.stripMargin
+
+    streamUtil.verifyPlan(sql)
+  }
+
+
+  @Test
+  def testJoinTemporalTableWithUDFANDRReferenceCondition(): Unit = {
+    val sql =
+      """
+        |SELECT * FROM MyTable AS T
+        |JOIN temporalTest FOR SYSTEM_TIME AS OF T.proctime AS D
+        |ON T.a = D.id AND T.b = concat(D.name, '!')
       """.stripMargin
 
     streamUtil.verifyPlan(sql)
