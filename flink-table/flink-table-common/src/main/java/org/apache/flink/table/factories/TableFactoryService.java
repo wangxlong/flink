@@ -215,6 +215,7 @@ public class TableFactoryService {
 			} else {
 				defaultLoader.iterator().forEachRemaining(result::add);
 			}
+//			result.add(new JsonRowFormatFactory());
 			return result;
 		} catch (ServiceConfigurationError e) {
 			LOG.error("Could not load service provider for table factories.", e);

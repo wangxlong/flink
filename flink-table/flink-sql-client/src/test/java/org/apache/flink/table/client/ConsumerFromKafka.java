@@ -1,5 +1,6 @@
 package org.apache.flink.table.client;
 
+
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeinfo.Types;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -15,7 +16,7 @@ import org.apache.flink.table.sinks.TableSink;
 import org.apache.flink.types.Row;
 
 
-public class TWOStreamJoinTest {
+public class ConsumerFromKafka {
 
 	public static void main(String [] args) throws Exception {
 
@@ -39,26 +40,35 @@ public class TWOStreamJoinTest {
 			}
 		});
 
-		tableEnv.registerDataStream("Orders", ds, "user, currency, amount");
 
-		DataStream<Tuple2<String, Long>> ratesHistoryStream = bsEnv.addSource(new SourceFunction<Tuple2<String, Long>>() {
-			@Override
-			public void run(SourceContext<Tuple2<String, Long>> ctx) throws Exception {
-				String name = "Yen";
-				String temp = "Yen";
-				long i = 0;
-				while (true) {
-					ctx.collect( new Tuple2(temp, i++));
-					Thread.sleep(20000 * 1);
-					temp = name + i;
-				}
-			}
-			@Override
-			public void cancel() {
+		String tableSourceConnectot = "create table kafkasource(\n" +
+			"                       a DOUBLE,\n" +
+			"                        b varchar,\n" +
+			"                        c int,\n" +
+			"                        d varchar,\n" +
+			"                        e int\n" +
+			"                      ) with (\n" +
+			"                        'connector.type' = 'kafka',       \n" +
+			"\n" +
+			"  'connector.version' = '0.10'," +
+			"\n" +
+			"  'connector.topic' = 'topic_name',\n" +
+			"\n" +
+			"  'update-mode' = 'append',         \n" +
+			"   'connector.property-version' = '1', \n" +
+			"\n" +
+			"  'connector.properties.0.key' = 'zookeeper.connect', \n" +
+			"  'connector.properties.0.value' = 'localhost:2181',\n" +
+			"  'connector.properties.1.key' = 'bootstrap.servers',\n" +
+			"  'connector.properties.1.value' = 'localhost:9092',\n" +
+			"  'connector.properties.2.key' = 'group.id',\n" +
+			"  'connector.properties.2.value' = 'testGroup',\n" +
+			"  'connector.startup-mode' = 'earliest-offset'   " +
+			"\n" +
+			"\n" +
+			")";
 
-			}
-		});
-		tableEnv.registerDataStream("Rate", ratesHistoryStream, "currency, rate");
+
 
 		// create and register a TableSink
 		String tableCsvSinkDDL = "create table RubberOrders(\n" +
@@ -110,61 +120,17 @@ public class TWOStreamJoinTest {
 		TypeInformation[] fieldTypes = {Types.DOUBLE, Types.STRING, Types.INT, Types.STRING, Types.LONG};
 		tableEnv.registerTableSink("aaaa", new MyRetractSink(fieldNames, fieldTypes));
 
+		tableEnv.sqlUpdate(tableSourceConnectot);
+
 		tableEnv.sqlUpdate(tableMysqlSink);
 
 //			String sql = "INSERT INTO aaaa SELECT * FROM Orders AS o left join Rate AS r on r.currency = o.currency and o.amount = 2 ";
 //		tableEnv.sqlUpdate(sql);
 
-		String sql = "INSERT INTO fiveFields SELECT user, currency, amount, currency, amount FROM Orders ";
+		String sql = "INSERT INTO fiveFields SELECT user, currency, amount, currency, amount FROM kafkasource ";
 		tableEnv.sqlUpdate(sql);
 
 		bsEnv.execute("m");
 	}
 
-}
-
-class MyRetractSink implements RetractStreamTableSink<Row> {
-
-
-	private String[] fieldNames;
-	private TypeInformation<?>[] fieldTypes;
-
-	public MyRetractSink(String[] fieldNames, TypeInformation<?>[] fieldTypes) {
-		this.fieldNames = fieldNames;
-		this.fieldTypes = fieldTypes;
-	}
-
-	@Override
-	public String[] getFieldNames() {
-		return fieldNames;
-	}
-
-	@Override
-	public TypeInformation<?>[] getFieldTypes() {
-		return fieldTypes;
-	}
-
-	@Override
-	public TypeInformation<Row> getRecordType() {
-		return  Types.ROW_NAMED(fieldNames, fieldTypes);
-	}
-
-	@Override
-	public void emitDataStream(DataStream dataStream) {
-		dataStream.print();
-	}
-
-	@Override
-	public TableSink configure(String[] fieldNames, TypeInformation[] fieldTypes) {
-		MyRetractSink myRetractSink = new MyRetractSink(fieldNames, fieldTypes);
-		myRetractSink.fieldNames = fieldNames;
-		myRetractSink.fieldTypes = fieldTypes;
-		return myRetractSink;
-	}
-
-
-	@Override
-	public DataStreamSink<?> consumeDataStream(DataStream<Tuple2<Boolean, Row>> dataStream) {
-		return dataStream.print();
-	}
 }
