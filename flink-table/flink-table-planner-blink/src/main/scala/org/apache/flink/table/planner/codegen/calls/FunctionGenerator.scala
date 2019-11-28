@@ -751,6 +751,21 @@ object FunctionGenerator {
     Seq(FLOAT, INTEGER),
     BuiltInMethods.TRUNCATE_FLOAT)
 
+  addSqlFunctionMethod(
+    TRUNCATE,
+    Seq(FLOAT, INTEGER),
+    BuiltInMethods.TRUNCATE_FLOAT)
+
+  addSqlFunctionMethod(
+    BITAND,
+    Seq(BIGINT, BIGINT),
+    BuiltInMethods.BITAND_LONG)
+
+  addSqlFunctionMethod(
+    BITAND,
+    Seq(INTEGER, INTEGER),
+    BuiltInMethods.BITAND_INTEGER)
+
 
   // ----------------------------------------------------------------------------------------------
 
