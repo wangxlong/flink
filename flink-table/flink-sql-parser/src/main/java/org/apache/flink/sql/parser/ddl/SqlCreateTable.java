@@ -229,7 +229,9 @@ public class SqlCreateTable extends SqlCreate implements ExtendedSqlNode {
 				tableColumn.getName().unparse(writer, 0, 0);
 			} else if (column instanceof SqlTableComputedColumn) {
 				SqlTableComputedColumn tableComputedColumn = (SqlTableComputedColumn) column;
-				tableComputedColumn.unparse(writer, 0, 0);
+				tableComputedColumn.getComputedExpression().unparse(writer, 0, 0);
+				writer.keyword("AS");
+				tableComputedColumn.getName().unparse(writer, 0, 0);
 			} else {
 				column.unparse(writer, 0, 0);
 			}
