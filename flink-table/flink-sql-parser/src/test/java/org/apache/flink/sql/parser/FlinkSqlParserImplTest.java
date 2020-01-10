@@ -241,7 +241,7 @@ public class FlinkSqlParserImplTest extends SqlParserTest {
 				"  a bigint comment 'test column comment AAA.',\n" +
 				"  h varchar, \n" +
 				"  g as 2 * (a + 1), \n" +
-				"  ts as toTimestamp(b, 'yyyy-MM-dd HH:mm:ss'), \n" +
+				"  ts as toTimestamp(b, 'yyyy-MM-dd HH:mm:ss') comment 'test computed comment ts.', \n" +
 				"  b varchar,\n" +
 				"  proc as PROCTIME(), \n" +
 				"  PRIMARY KEY (a, b)\n" +
@@ -256,7 +256,7 @@ public class FlinkSqlParserImplTest extends SqlParserTest {
 				"  `A`  BIGINT  COMMENT 'test column comment AAA.',\n" +
 				"  `H`  VARCHAR,\n" +
 				"  `G` AS (2 * (`A` + 1)),\n" +
-				"  `TS` AS `TOTIMESTAMP`(`B`, 'yyyy-MM-dd HH:mm:ss'),\n" +
+				"  `TS` AS `TOTIMESTAMP`(`B`, 'yyyy-MM-dd HH:mm:ss')  COMMENT 'test computed comment ts.',\n" +
 				"  `B`  VARCHAR,\n" +
 				"  `PROC` AS `PROCTIME`(),\n" +
 				"  PRIMARY KEY (`A`, `B`)\n" +

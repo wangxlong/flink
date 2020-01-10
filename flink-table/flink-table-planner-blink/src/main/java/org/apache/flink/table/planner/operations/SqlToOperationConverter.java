@@ -30,6 +30,7 @@ import org.apache.flink.sql.parser.ddl.SqlDropDatabase;
 import org.apache.flink.sql.parser.ddl.SqlDropFunction;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableComputedColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 import org.apache.flink.sql.parser.ddl.SqlUseCatalog;
 import org.apache.flink.sql.parser.ddl.SqlUseDatabase;
@@ -485,17 +486,17 @@ public class SqlToOperationConverter {
 				builder.field(fieldName,
 					TypeConversions.fromLogicalToDataType(
 						FlinkTypeFactory.toLogicalType(physicalFieldNamesToTypes.get(fieldName))));
-			} else if (node instanceof SqlBasicCall) {
-				SqlBasicCall call = (SqlBasicCall) node;
+			} else if (node instanceof SqlTableComputedColumn) {
+				SqlTableComputedColumn column = (SqlTableComputedColumn) node;
 				SqlNode validatedExpr = validator
-					.validateParameterizedExpression(call.operand(0), physicalFieldNamesToTypes);
+					.validateParameterizedExpression(column.getComputedExpression(), physicalFieldNamesToTypes);
 				final RelDataType validatedType = validator.getValidatedNodeType(validatedExpr);
-				builder.field(call.operand(1).toString(),
+				builder.field(column.getName().getSimple(),
 					TypeConversions.fromLogicalToDataType(
 						FlinkTypeFactory.toLogicalType(validatedType)),
 					validatedExpr.toString());
 				// add computed column into all field list
-				String fieldName = call.operand(1).toString();
+				String fieldName = column.getName().getSimple();
 				allFieldNamesToTypes.put(fieldName, validatedType);
 			} else {
 				throw new TableException("Unexpected table column type!");

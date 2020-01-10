@@ -395,9 +395,10 @@ void Watermark(TableCreationContext context) :
 
 void ComputedColumn(TableCreationContext context) :
 {
-    SqlNode identifier;
+    SqlIdentifier identifier;
     SqlNode expr;
     SqlParserPos pos;
+    SqlCharStringLiteral comment = null;
 }
 {
     identifier = SimpleIdentifier()
