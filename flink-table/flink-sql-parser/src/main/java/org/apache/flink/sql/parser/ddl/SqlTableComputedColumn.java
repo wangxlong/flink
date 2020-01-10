@@ -74,9 +74,9 @@ public class SqlTableComputedColumn extends SqlCall {
 
 	@Override
 	public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
-		this.name.unparse(writer, leftPrec, rightPrec);
-		writer.keyword("AS");
 		this.computedExpression.unparse(writer, leftPrec, rightPrec);
+		writer.keyword("AS");
+		this.name.unparse(writer, leftPrec, rightPrec);
 		if (this.comment != null) {
 			writer.print(" COMMENT ");
 			this.comment.unparse(writer, leftPrec, rightPrec);
