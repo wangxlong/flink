@@ -93,6 +93,7 @@ public class WatermarkSpec {
 	@Override
 	public String toString() {
 		return "rowtime: '" + rowtimeAttribute + '\'' +
-			", watermark: '" + watermarkExpressionString + '\'';
+			", watermark: '" + watermarkExpressionString + '\'' +
+			", outputType: '" + watermarkExprOutputType + '\'';
 	}
 }
