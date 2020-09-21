@@ -361,12 +361,12 @@ class WindowAggregateITCase(mode: StateBackendMode)
       """
         |SELECT
         |  `string`,
-        |  TUMBLE_START(rowtime, INTERVAL '0.005' SECOND, TIME '00:00:00.003'),
-        |  TUMBLE_END(rowtime, INTERVAL '0.005' SECOND, TIME '00:00:00.003'),
+        |  TUMBLE_START(rowtime, INTERVAL '0.005' SECOND, INTERVAL '0.003' SECOND),
+        |  TUMBLE_END(rowtime, INTERVAL '0.005' SECOND, INTERVAL '0.003' SECOND),
         |  SUM(`int`),
         |  COUNT(`int`)
         |FROM T1
-        |GROUP BY `string`, TUMBLE(rowtime, INTERVAL '0.005' SECOND, TIME '00:00:00.003')
+        |GROUP BY `string`, TUMBLE(rowtime, INTERVAL '0.005' SECOND, INTERVAL '0.003' SECOND)
       """.stripMargin
 
     val sink = new TestingAppendSink
@@ -398,14 +398,15 @@ class WindowAggregateITCase(mode: StateBackendMode)
         |SELECT
         |  `string`,
         |  HOP_START(rowtime,
-        |   INTERVAL '0.004' SECOND, INTERVAL '0.005' SECOND, TIME '00:00:00.003'),
+        |   INTERVAL '0.004' SECOND, INTERVAL '0.005' SECOND, INTERVAL '0.003' SECOND),
         |  HOP_END(rowtime,
-        |   INTERVAL '0.004' SECOND,  INTERVAL '0.005' SECOND, TIME '00:00:00.003'),
+        |   INTERVAL '0.004' SECOND,  INTERVAL '0.005' SECOND, INTERVAL '0.003' SECOND),
         |  SUM(`int`),
         |  COUNT(`int`)
         |FROM T1
         |GROUP BY `string`,
-        | HOP(rowtime, INTERVAL '0.004' SECOND,  INTERVAL '0.005' SECOND, TIME '00:00:00.003')
+        | HOP(rowtime, INTERVAL '0.004' SECOND,
+        |   INTERVAL '0.005' SECOND, INTERVAL '0.003' SECOND)
       """.stripMargin
 
     val sink = new TestingAppendSink

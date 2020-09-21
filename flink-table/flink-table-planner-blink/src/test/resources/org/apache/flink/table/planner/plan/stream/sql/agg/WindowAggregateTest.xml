@@ -621,13 +621,13 @@ GroupWindowAggregate(window=[TumblingGroupWindow('w$, $f2, 1000)], select=[SUM(a
   </TestCase>
   <TestCase name="testTumblingWindowWithOffset">
 	<Resource name="sql">
-	  <![CDATA[select sum(a), max(b) from MyTable1 group by TUMBLE(c, INTERVAL '4' SECOND, TIME '00:00:03')]]>
+	  <![CDATA[select sum(a), max(b) from MyTable1 group by TUMBLE(c, INTERVAL '4' SECOND, INTERVAL '3' SECOND)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(EXPR$0=[$1], EXPR$1=[$2])
 +- LogicalAggregate(group=[{0}], EXPR$0=[SUM($1)], EXPR$1=[MAX($2)])
-   +- LogicalProject($f0=[$TUMBLE(PROCTIME(), 4000:INTERVAL SECOND, 00:00:03)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[$TUMBLE(PROCTIME(), 4000:INTERVAL SECOND, 3000:INTERVAL SECOND)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable1, source: [CollectionTableSource(a, b)]]])
 ]]>
 	</Resource>
@@ -641,13 +641,13 @@ GroupWindowAggregate(window=[TumblingGroupWindow('w$, $f2, 4000, 3000)], select=
   </TestCase>
   <TestCase name="testHopWindowWithOffset">
 	<Resource name="sql">
-	  <![CDATA[select sum(a), max(b) FROM MyTable1 GROUP BY HOP(c, INTERVAL '4' SECOND, INTERVAL '5' SECOND, TIME '00:00:03')]]>
+	  <![CDATA[select sum(a), max(b) FROM MyTable1 GROUP BY HOP(c, INTERVAL '4' SECOND, INTERVAL '5' SECOND, INTERVAL '3' SECOND)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(EXPR$0=[$1], EXPR$1=[$2])
 +- LogicalAggregate(group=[{0}], EXPR$0=[SUM($1)], EXPR$1=[MAX($2)])
-   +- LogicalProject($f0=[HOP(PROCTIME(), 4000:INTERVAL SECOND, 5000:INTERVAL SECOND, 00:00:03)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[HOP(PROCTIME(), 4000:INTERVAL SECOND, 5000:INTERVAL SECOND, 3000:INTERVAL SECOND)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable1, source: [CollectionTableSource(a, b)]]])
 ]]>
 	</Resource>

@@ -149,7 +149,8 @@ class WindowAggregateTest extends TableTestBase {
   @Test
   def testTumblingWindowWithOffset(): Unit = {
     val sql =
-      "select sum(a), max(b) from MyTable1 group by TUMBLE(c, INTERVAL '4' SECOND, TIME '00:00:03')"
+      "select sum(a), max(b) from MyTable1 " +
+        "group by TUMBLE(c, INTERVAL '4' SECOND, INTERVAL '3' SECOND)"
     util.verifyPlan(sql)
   }
 
@@ -157,7 +158,7 @@ class WindowAggregateTest extends TableTestBase {
   def testHopWindowWithOffset(): Unit = {
     val sql =
       "select sum(a), max(b) FROM MyTable1 " +
-      "GROUP BY HOP(c, INTERVAL '4' SECOND, INTERVAL '5' SECOND, TIME '00:00:03')"
+      "GROUP BY HOP(c, INTERVAL '4' SECOND, INTERVAL '5' SECOND, INTERVAL '3' SECOND)"
     util.verifyPlan(sql)
   }
 

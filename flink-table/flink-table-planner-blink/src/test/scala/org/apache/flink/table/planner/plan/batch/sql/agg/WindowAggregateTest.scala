@@ -116,7 +116,7 @@ class WindowAggregateTest(aggStrategy: AggregatePhaseStrategy) extends TableTest
   def testTumbleWindowWithOffset(): Unit = {
     val sqlQuery =
       "SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 " +
-        "GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, TIME '10:00:00')"
+        "GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, INTERVAL '10' HOUR)"
     util.verifyPlan(sqlQuery)
   }
 
@@ -124,7 +124,7 @@ class WindowAggregateTest(aggStrategy: AggregatePhaseStrategy) extends TableTest
   def testHopWindowWithOffset(): Unit = {
     val sqlQuery =
       "SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 " +
-        "GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, TIME '10:00:00')"
+        "GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, INTERVAL '10' HOUR)"
     util.verifyPlan(sqlQuery)
   }
 

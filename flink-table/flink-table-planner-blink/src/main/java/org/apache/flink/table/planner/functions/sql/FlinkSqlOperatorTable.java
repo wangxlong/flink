@@ -808,7 +808,7 @@ public class FlinkSqlOperatorTable extends ReflectiveSqlOperatorTable {
 	public static final SqlGroupedWindowFunction TUMBLE = new SqlGroupedWindowFunction(
 			// The TUMBLE group function was hard code to $TUMBLE in CALCITE-3382.
 			"$TUMBLE", SqlKind.TUMBLE, null,
-			OperandTypes.or(OperandTypes.DATETIME_INTERVAL, OperandTypes.DATETIME_INTERVAL_TIME)) {
+			OperandTypes.or(OperandTypes.DATETIME_INTERVAL, OperandTypes.DATETIME_INTERVAL_INTERVAL)) {
 		@Override
 		public List<SqlGroupedWindowFunction> getAuxiliaryFunctions() {
 			return Arrays.asList(TUMBLE_START, TUMBLE_END, TUMBLE_ROWTIME, TUMBLE_PROCTIME);
@@ -827,7 +827,9 @@ public class FlinkSqlOperatorTable extends ReflectiveSqlOperatorTable {
 			null,
 			OperandTypes.or(
 			OperandTypes.DATETIME_INTERVAL_INTERVAL,
-			OperandTypes.DATETIME_INTERVAL_INTERVAL_TIME)) {
+			OperandTypes.family(
+				SqlTypeFamily.DATETIME, SqlTypeFamily.DATETIME_INTERVAL,
+				SqlTypeFamily.DATETIME_INTERVAL, SqlTypeFamily.DATETIME_INTERVAL))) {
 		@Override
 		public List<SqlGroupedWindowFunction> getAuxiliaryFunctions() {
 			return Arrays.asList(HOP_START, HOP_END, HOP_ROWTIME, HOP_PROCTIME);

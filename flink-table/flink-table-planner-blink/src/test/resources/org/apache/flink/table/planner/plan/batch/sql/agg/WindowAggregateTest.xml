@@ -317,13 +317,13 @@ Calc(select=[EXPR$0, w$start AS EXPR$1, w$end AS EXPR$2])
   </TestCase>
   <TestCase name="testTumbleWindowWithOffset[aggStrategy=AUTO]">
 	<Resource name="sql">
-	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, TIME '10:00:00')]]>
+	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, INTERVAL '10' HOUR)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(sumA=[$1], cntB=[$2])
 +- LogicalAggregate(group=[{0}], sumA=[SUM($1)], cntB=[COUNT($2)])
-   +- LogicalProject($f0=[$TUMBLE($4, 3600000:INTERVAL HOUR, 10:00:00)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[$TUMBLE($4, 3600000:INTERVAL HOUR, 36000000:INTERVAL HOUR)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(a, b, c, d, ts)]]])
 ]]>
 	</Resource>
@@ -339,13 +339,13 @@ HashWindowAggregate(window=[TumblingGroupWindow('w$, ts, 3600000, 36000000)], se
   </TestCase>
   <TestCase name="testTumbleWindowWithOffset[aggStrategy=ONE_PHASE]">
 	<Resource name="sql">
-	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, TIME '10:00:00')]]>
+	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, INTERVAL '10' HOUR)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(sumA=[$1], cntB=[$2])
 +- LogicalAggregate(group=[{0}], sumA=[SUM($1)], cntB=[COUNT($2)])
-   +- LogicalProject($f0=[$TUMBLE($4, 3600000:INTERVAL HOUR, 10:00:00)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[$TUMBLE($4, 3600000:INTERVAL HOUR, 36000000:INTERVAL HOUR)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(a, b, c, d, ts)]]])
 ]]>
 	</Resource>
@@ -360,13 +360,13 @@ HashWindowAggregate(window=[TumblingGroupWindow('w$, ts, 3600000, 36000000)], se
   </TestCase>
   <TestCase name="testTumbleWindowWithOffset[aggStrategy=TWO_PHASE]">
 	<Resource name="sql">
-	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, TIME '10:00:00')]]>
+	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY TUMBLE(ts, INTERVAL '1' HOUR, INTERVAL '10' HOUR)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(sumA=[$1], cntB=[$2])
 +- LogicalAggregate(group=[{0}], sumA=[SUM($1)], cntB=[COUNT($2)])
-   +- LogicalProject($f0=[$TUMBLE($4, 3600000:INTERVAL HOUR, 10:00:00)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[$TUMBLE($4, 3600000:INTERVAL HOUR, 36000000:INTERVAL HOUR)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(a, b, c, d, ts)]]])
 ]]>
 	</Resource>
@@ -382,13 +382,13 @@ HashWindowAggregate(window=[TumblingGroupWindow('w$, ts, 3600000, 36000000)], se
   </TestCase>
   <TestCase name="testHopWindowWithOffset[aggStrategy=AUTO]">
 	<Resource name="sql">
-	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, TIME '10:00:00')]]>
+	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, INTERVAL '10' HOUR)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(sumA=[$1], cntB=[$2])
 +- LogicalAggregate(group=[{0}], sumA=[SUM($1)], cntB=[COUNT($2)])
-   +- LogicalProject($f0=[HOP($4, 3600000:INTERVAL HOUR, 7200000:INTERVAL HOUR, 10:00:00)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[HOP($4, 3600000:INTERVAL HOUR, 7200000:INTERVAL HOUR, 36000000:INTERVAL HOUR)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(a, b, c, d, ts)]]])
 ]]>
 	</Resource>
@@ -404,13 +404,13 @@ HashWindowAggregate(window=[SlidingGroupWindow('w$, ts, 7200000, 3600000, 360000
   </TestCase>
   <TestCase name="testHopWindowWithOffset[aggStrategy=ONE_PHASE]">
 	<Resource name="sql">
-	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, TIME '10:00:00')]]>
+	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, INTERVAL '10' HOUR)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(sumA=[$1], cntB=[$2])
 +- LogicalAggregate(group=[{0}], sumA=[SUM($1)], cntB=[COUNT($2)])
-   +- LogicalProject($f0=[HOP($4, 3600000:INTERVAL HOUR, 7200000:INTERVAL HOUR, 10:00:00)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[HOP($4, 3600000:INTERVAL HOUR, 7200000:INTERVAL HOUR, 36000000:INTERVAL HOUR)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(a, b, c, d, ts)]]])
 ]]>
 	</Resource>
@@ -426,13 +426,13 @@ SortWindowAggregate(window=[SlidingGroupWindow('w$, ts, 7200000, 3600000, 360000
   </TestCase>
   <TestCase name="testHopWindowWithOffset[aggStrategy=TWO_PHASE]">
 	<Resource name="sql">
-	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, TIME '10:00:00')]]>
+	  <![CDATA[SELECT SUM(a) AS sumA, COUNT(b) AS cntB FROM MyTable2 GROUP BY HOP(ts, INTERVAL '1' HOUR, INTERVAL '2' HOUR, INTERVAL '10' HOUR)]]>
 	</Resource>
 	<Resource name="planBefore">
 	  <![CDATA[
 LogicalProject(sumA=[$1], cntB=[$2])
 +- LogicalAggregate(group=[{0}], sumA=[SUM($1)], cntB=[COUNT($2)])
-   +- LogicalProject($f0=[HOP($4, 3600000:INTERVAL HOUR, 7200000:INTERVAL HOUR, 10:00:00)], a=[$0], b=[$1])
+   +- LogicalProject($f0=[HOP($4, 3600000:INTERVAL HOUR, 7200000:INTERVAL HOUR, 36000000:INTERVAL HOUR)], a=[$0], b=[$1])
       +- LogicalTableScan(table=[[default_catalog, default_database, MyTable2, source: [TestTableSource(a, b, c, d, ts)]]])
 ]]>
 	</Resource>

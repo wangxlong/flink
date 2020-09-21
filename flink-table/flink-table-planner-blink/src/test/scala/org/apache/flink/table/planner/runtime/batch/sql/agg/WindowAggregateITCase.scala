@@ -628,10 +628,10 @@ class WindowAggregateITCase extends BatchTestBase {
     // sort; keyed; 2-phase;
     checkResult(
       "SELECT a, countFun(a), " +
-        "TUMBLE_START(ts, INTERVAL '3' SECOND, TIME '00:00:02'), " +
-        "TUMBLE_END(ts, INTERVAL '3' SECOND, TIME '00:00:02') " +
+        "TUMBLE_START(ts, INTERVAL '3' SECOND, INTERVAL '2' SECOND), " +
+        "TUMBLE_END(ts, INTERVAL '3' SECOND, INTERVAL '2' SECOND) " +
         "FROM Table3WithTimestamp " +
-        "GROUP BY a, TUMBLE(ts, INTERVAL '3' SECOND, TIME '00:00:02')",
+        "GROUP BY a, TUMBLE(ts, INTERVAL '3' SECOND, INTERVAL '2' SECOND)",
       Seq(
         row(1, 1,
           localDateTime("1969-12-31 23:59:59.0"), localDateTime("1970-01-01 00:00:02.0")),
@@ -680,10 +680,10 @@ class WindowAggregateITCase extends BatchTestBase {
 
     // hash; keyed; 2-phase;
     checkResult(
-      "SELECT a, avg(b), min(b), TUMBLE_START(f, INTERVAL '10' SECOND, TIME '00:00:02'), " +
-        "TUMBLE_END(f, INTERVAL '10' SECOND, TIME '00:00:02') " +
+      "SELECT a, avg(b), min(b), TUMBLE_START(f, INTERVAL '10' SECOND, INTERVAL '2' SECOND), " +
+        "TUMBLE_END(f, INTERVAL '10' SECOND, INTERVAL '2' SECOND) " +
         "FROM Table6 " +
-        "GROUP BY a, TUMBLE(f, INTERVAL '10' SECOND, TIME '00:00:02')",
+        "GROUP BY a, TUMBLE(f, INTERVAL '10' SECOND, INTERVAL '2' SECOND)",
       Seq(
         row(1, 1.1, 1.1,
           localDateTime("2015-05-20 09:59:52.0"), localDateTime("2015-05-20 10:00:02")),
@@ -722,10 +722,10 @@ class WindowAggregateITCase extends BatchTestBase {
     // sort; keyed; 2-phase;
     checkResult(
       "SELECT b, sumFun(a), " +
-        "HOP_START(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, TIME '00:00:03'), " +
-        "HOP_END(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, TIME '00:00:03') " +
+        "HOP_START(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, INTERVAL '3' SECOND), " +
+        "HOP_END(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, INTERVAL '3' SECOND) " +
         "FROM Table3WithTimestamp " +
-        "GROUP BY b, HOP(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, TIME '00:00:03')",
+        "GROUP BY b, HOP(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, INTERVAL '3' SECOND)",
       Seq(
         row(1, 1,
           localDateTime("1969-12-31 23:59:53.0"), localDateTime("1970-01-01 00:00:02.0")),
@@ -761,10 +761,10 @@ class WindowAggregateITCase extends BatchTestBase {
     // hash; keyed; 2-phase;
     checkResult(
       "SELECT b, sum(a), " +
-        "HOP_START(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, TIME '00:00:03'), " +
-        "HOP_END(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, TIME '00:00:03') " +
+        "HOP_START(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, INTERVAL '3' SECOND), " +
+        "HOP_END(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, INTERVAL '3' SECOND) " +
         "FROM Table3WithTimestamp " +
-        "GROUP BY b, HOP(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND,TIME '00:00:03')",
+        "GROUP BY b, HOP(ts, INTERVAL '5' SECOND, INTERVAL '9' SECOND, INTERVAL '3' SECOND)",
       Seq(
         row(1, 1,
           localDateTime("1969-12-31 23:59:53.0"), localDateTime("1970-01-01 00:00:02.0")),
