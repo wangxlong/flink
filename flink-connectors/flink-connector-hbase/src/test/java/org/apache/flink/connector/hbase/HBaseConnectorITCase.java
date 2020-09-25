@@ -90,8 +90,7 @@ public class HBaseConnectorITCase extends HBaseTestBase {
 	public static Object[] parameters() {
 		return new Object[][]{
 			new Object[]{PlannerType.BLINK_PLANNER, true},
-			new Object[]{PlannerType.BLINK_PLANNER, false},
-			new Object[]{PlannerType.OLD_PLANNER, true}
+			new Object[]{PlannerType.BLINK_PLANNER, false}
 		};
 	}
 
