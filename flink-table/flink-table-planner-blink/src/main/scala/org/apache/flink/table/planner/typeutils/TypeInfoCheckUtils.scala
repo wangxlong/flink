@@ -32,6 +32,9 @@ object TypeInfoCheckUtils {
     case _ => false
   }
 
+  def isComparable(dataType: TypeInformation[_]): Boolean =
+    classOf[Comparable[_]].isAssignableFrom(dataType.getTypeClass) && !isArray(dataType)
+
   def isTemporal(dataType: TypeInformation[_]): Boolean =
     isTimePoint(dataType) || isTimeInterval(dataType)
 
@@ -48,8 +51,18 @@ object TypeInfoCheckUtils {
     case _ => false
   }
 
+  def isBoolean(dataType: TypeInformation[_]): Boolean = dataType == BOOLEAN_TYPE_INFO
+
+  def isString(dataType: TypeInformation[_]): Boolean = dataType == STRING_TYPE_INFO
+
   def isMap(dataType: TypeInformation[_]): Boolean =
     dataType.isInstanceOf[MapTypeInfo[_, _]]
+
+  /**
+    * Types that can be easily converted into a string without ambiguity.
+    */
+  def isSimpleStringRepresentation(dataType: TypeInformation[_]): Boolean =
+    isNumeric(dataType) || isString(dataType) || isTemporal(dataType) || isBoolean(dataType)
 
   def assertNumericExpr(
       dataType: TypeInformation[_],

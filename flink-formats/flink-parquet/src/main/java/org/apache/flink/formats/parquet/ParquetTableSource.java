@@ -26,28 +26,33 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.utils.ParquetSchemaConverter;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.expressions.And;
-import org.apache.flink.table.expressions.Attribute;
-import org.apache.flink.table.expressions.BinaryComparison;
-import org.apache.flink.table.expressions.BinaryExpression;
-import org.apache.flink.table.expressions.EqualTo;
+import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.planner.expressions.And;
+import org.apache.flink.table.planner.expressions.Attribute;
+import org.apache.flink.table.planner.expressions.BinaryComparison;
+import org.apache.flink.table.planner.expressions.BinaryExpression;
+import org.apache.flink.table.planner.expressions.EqualTo;
+import org.apache.flink.table.planner.expressions.GreaterThan;
+import org.apache.flink.table.planner.expressions.GreaterThanOrEqual;
+import org.apache.flink.table.planner.expressions.LessThan;
+import org.apache.flink.table.planner.expressions.LessThanOrEqual;
+import org.apache.flink.table.planner.expressions.Literal;
+import org.apache.flink.table.planner.expressions.Not;
+import org.apache.flink.table.planner.expressions.NotEqualTo;
+import org.apache.flink.table.planner.expressions.Or;
 import org.apache.flink.table.expressions.Expression;
-import org.apache.flink.table.expressions.GreaterThan;
-import org.apache.flink.table.expressions.GreaterThanOrEqual;
-import org.apache.flink.table.expressions.LessThan;
-import org.apache.flink.table.expressions.LessThanOrEqual;
-import org.apache.flink.table.expressions.Literal;
-import org.apache.flink.table.expressions.Not;
-import org.apache.flink.table.expressions.NotEqualTo;
-import org.apache.flink.table.expressions.Or;
 import org.apache.flink.table.sources.BatchTableSource;
 import org.apache.flink.table.sources.FilterableTableSource;
 import org.apache.flink.table.sources.ProjectableTableSource;
+import org.apache.flink.table.sources.StreamTableSource;
 import org.apache.flink.table.sources.TableSource;
+import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
-
 import org.apache.hadoop.conf.Configuration;
 import org.apache.parquet.filter2.predicate.FilterApi;
 import org.apache.parquet.filter2.predicate.FilterPredicate;
@@ -71,6 +76,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * A TableSource to read Parquet files.
@@ -92,7 +98,7 @@ import java.util.List;
  * </pre>
  */
 public class ParquetTableSource
-	implements BatchTableSource<Row>, FilterableTableSource<Row>, ProjectableTableSource<Row> {
+	implements StreamTableSource<Row>,FilterableTableSource<Row>, ProjectableTableSource<Row> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(ParquetTableSource.class);
 
@@ -160,21 +166,6 @@ public class ParquetTableSource
 	}
 
 	@Override
-	public DataSet<Row> getDataSet(ExecutionEnvironment executionEnvironment) {
-		ParquetRowInputFormat parquetRowInputFormat = new ParquetRowInputFormat(new Path(path), parquetSchema);
-		parquetRowInputFormat.setNestedFileEnumeration(recursiveEnumeration);
-		if (selectedFields != null) {
-			parquetRowInputFormat.selectFields(typeInfo.getFieldNames());
-		}
-
-		if (predicate != null) {
-			parquetRowInputFormat.setFilterPredicate(predicate);
-		}
-
-		return executionEnvironment.createInput(parquetRowInputFormat).name(explainSource());
-	}
-
-	@Override
 	public TableSource<Row> applyPredicate(List<Expression> predicates) {
 
 		// try to convert Flink filter expressions to Parquet FilterPredicates
@@ -212,6 +203,28 @@ public class ParquetTableSource
 	@Override
 	public boolean isFilterPushedDown() {
 		return isFilterPushedDown;
+	}
+
+//	@Override
+//	public DataType getProducedDataType() {
+//		return null;
+//	}
+
+
+
+	@Override
+	public DataType getProducedDataType() {
+		if (selectedFields != null) {
+			DataType[] dataTypes = new DataType[selectedFields.length];
+			String[] fieldNames = new String[selectedFields.length];
+			for (int i = 0; i < selectedFields.length; i++) {
+				dataTypes[i] = tableSchema.getFieldDataTypes()[selectedFields[i]];
+				fieldNames[i] = tableSchema.getFieldNames()[selectedFields[i]];
+			}
+			return 	TableSchema.builder().fields(fieldNames, dataTypes).build().toRowDataType();
+		} else {
+			return tableSchema.toRowDataType();
+		}
 	}
 
 	@Override
@@ -494,6 +507,26 @@ public class ParquetTableSource
 	// Builder
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	@Override
+	public DataStream<Row> getDataStream(StreamExecutionEnvironment execEnv) {
+		ParquetRowInputFormat parquetRowInputFormat = new ParquetRowInputFormat(new Path(path), parquetSchema);
+		parquetRowInputFormat.setNestedFileEnumeration(recursiveEnumeration);
+		if (selectedFields != null) {
+			parquetRowInputFormat.selectFields(typeInfo.getFieldNames());
+		}
+
+		if (predicate != null) {
+			parquetRowInputFormat.setFilterPredicate(predicate);
+		}
+
+		return execEnv.createInput(parquetRowInputFormat).name(explainSource());
+	}
+
+	@Override
+	public boolean isBounded() {
+		return true;
 	}
 
 	/**

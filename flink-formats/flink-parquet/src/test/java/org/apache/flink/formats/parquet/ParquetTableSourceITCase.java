@@ -22,13 +22,18 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.core.fs.Path;
 import org.apache.flink.formats.parquet.utils.TestUtil;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.BatchTableEnvironment;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentInternal;
 import org.apache.flink.test.util.MultipleProgramsTestBase;
 import org.apache.flink.types.Row;
 
 import org.apache.avro.generic.IndexedRecord;
+import org.apache.flink.util.CollectionUtil;
 import org.apache.parquet.avro.AvroSchemaConverter;
 import org.apache.parquet.schema.MessageType;
 import org.junit.BeforeClass;
@@ -62,36 +67,37 @@ public class ParquetTableSourceITCase extends MultipleProgramsTestBase {
 
 	@Test
 	public void testFullScan() throws Exception {
-		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		BatchTableEnvironment batchTableEnvironment = BatchTableEnvironment.create(env);
+		EnvironmentSettings batchSettings =
+			EnvironmentSettings.newInstance().inBatchMode().useBlinkPlanner().build();
+		TableEnvironment tEnv = TableEnvironment.create(batchSettings);
 		ParquetTableSource tableSource = createParquetTableSource(testPath);
-		((TableEnvironmentInternal) batchTableEnvironment).registerTableSourceInternal("ParquetTable", tableSource);
+		((TableEnvironmentInternal) tEnv).registerTableSourceInternal("ParquetTable", tableSource);
 		String query =
 			"SELECT foo " +
 			"FROM ParquetTable";
 
-		Table table = batchTableEnvironment.sqlQuery(query);
-		DataSet<Row> dataSet = batchTableEnvironment.toDataSet(table, Row.class);
-		List<Row> result = dataSet.collect();
+		Table table = tEnv.sqlQuery(query);
+		List<Row> results = CollectionUtil.iteratorToList(table.execute().collect());
 
-		assertEquals(1000, result.size());
+		assertEquals(1000, results.size());
 	}
 
 	@Test
 	public void testScanWithProjectionAndFilter() throws Exception {
-		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		BatchTableEnvironment batchTableEnvironment = BatchTableEnvironment.create(env);
+		EnvironmentSettings batchSettings =
+			EnvironmentSettings.newInstance().inBatchMode().useBlinkPlanner().build();
+		TableEnvironment tEnv = TableEnvironment.create(batchSettings);
 		ParquetTableSource tableSource = createParquetTableSource(testPath);
-		((TableEnvironmentInternal) batchTableEnvironment).registerTableSourceInternal("ParquetTable", tableSource);
+		((TableEnvironmentInternal) tEnv).registerTableSourceInternal("ParquetTable", tableSource);
 		String query =
 			"SELECT foo " +
 			"FROM ParquetTable WHERE foo >= 1 AND bar.spam >= 30 AND CARDINALITY(arr) >= 1 AND arr[1] <= 50";
 
-		Table table = batchTableEnvironment.sqlQuery(query);
-		DataSet<Row> dataSet = batchTableEnvironment.toDataSet(table, Row.class);
-		List<Row> result = dataSet.collect();
+		Table table = tEnv.sqlQuery(query);
 
-		assertEquals(21, result.size());
+		List<Row> results = CollectionUtil.iteratorToList(table.execute().collect());
+
+		assertEquals(21, results.size());
 	}
 
 	/**

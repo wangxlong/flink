@@ -19,6 +19,8 @@
 package org.apache.flink.table.utils;
 
 import org.apache.flink.annotation.Internal;
+import org.apache.flink.api.common.typeinfo.BasicArrayTypeInfo;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.table.api.TableColumn;
 import org.apache.flink.table.api.TableSchema;
 import org.apache.flink.table.api.ValidationException;
@@ -27,14 +29,17 @@ import org.apache.flink.table.sources.DefinedRowtimeAttributes;
 import org.apache.flink.table.sources.RowtimeAttributeDescriptor;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.table.types.DataType;
+import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LegacyTypeInformationType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
+import org.apache.flink.table.types.logical.StructuredType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeDefaultVisitor;
 import org.apache.flink.table.types.utils.DataTypeUtils;
+import org.apache.flink.table.types.utils.TypeConversions;
 import org.apache.flink.table.typeutils.TimeIndicatorTypeInfo;
 
 import java.util.Collections;
@@ -277,21 +282,31 @@ public final class TypeMappingUtils {
 
 			@Override
 			public Void visit(LogicalType other) {
-				if (other instanceof LegacyTypeInformationType && other.getTypeRoot() == LogicalTypeRoot.DECIMAL) {
-					if (!(targetType instanceof DecimalType)) {
-						throw exceptionSupplier.apply(null);
-					}
+				if (other instanceof LegacyTypeInformationType ) {
+					if (other.getTypeRoot() == LogicalTypeRoot.DECIMAL) {
+						if (!(targetType instanceof DecimalType)) {
+							throw exceptionSupplier.apply(null);
+						}
 
-					DecimalType logicalDecimalType = (DecimalType) targetType;
-					if (logicalDecimalType.getPrecision() != DecimalType.MAX_PRECISION ||
+						DecimalType logicalDecimalType = (DecimalType) targetType;
+						if (logicalDecimalType.getPrecision() != DecimalType.MAX_PRECISION ||
 							logicalDecimalType.getScale() != 18) {
-						throw exceptionSupplier.apply(new ValidationException(
-							"Legacy decimal type can only be mapped to DECIMAL(38, 18)."));
+							throw exceptionSupplier.apply(new ValidationException(
+								"Legacy decimal type can only be mapped to DECIMAL(38, 18)."));
+						}
 					}
-
+					if (other.getTypeRoot() == LogicalTypeRoot.ARRAY) {
+						if (!(targetType instanceof ArrayType)) {
+							throw exceptionSupplier.apply(null);
+						}
+						if (((LegacyTypeInformationType) other).getTypeInformation() instanceof BasicArrayTypeInfo) {
+							TypeInformation typeInfo = ((LegacyTypeInformationType) other).getTypeInformation();
+							DataType dataType = TypeConversions.fromLegacyInfoToDataType(((BasicArrayTypeInfo<?, ?>) typeInfo).getComponentInfo());
+							checkIfCompatible(dataType.getLogicalType(), ((ArrayType) targetType).getElementType(), exceptionSupplier);
+						}
+					}
 					return null;
 				}
-
 				return defaultMethod(other);
 			}
 

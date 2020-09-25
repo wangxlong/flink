@@ -137,6 +137,31 @@ public final class LegacyTypeInfoDataTypeConverter {
 		addMapping(
 			PrimitiveArrayTypeInfo.DOUBLE_PRIMITIVE_ARRAY_TYPE_INFO,
 			DataTypes.ARRAY(DataTypes.DOUBLE().notNull().bridgedTo(double.class)).bridgedTo(double[].class));
+
+//		addMapping(
+//			BasicArrayTypeInfo.BOOLEAN_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.BOOLEAN().notNull().bridgedTo(Boolean.class)).bridgedTo(Boolean[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.BYTE_ARRAY_TYPE_INFO,
+//			DataTypes.BYTES().bridgedTo(byte[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.SHORT_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.SMALLINT().notNull().bridgedTo(Short.class)).bridgedTo(Short[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.INT_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.INT().notNull().bridgedTo(Integer.class)).bridgedTo(Integer[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.LONG_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.BIGINT().notNull().bridgedTo(Long.class)).bridgedTo(Long[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.FLOAT_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.FLOAT().notNull().bridgedTo(Float.class)).bridgedTo(Float[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.DOUBLE_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.DOUBLE().notNull().bridgedTo(Double.class)).bridgedTo(Double[].class));
+//		addMapping(
+//			BasicArrayTypeInfo.STRING_ARRAY_TYPE_INFO,
+//			DataTypes.ARRAY(DataTypes.STRING().notNull().bridgedTo(String.class)).bridgedTo(String[].class));
 	}
 
 	private static void addMapping(TypeInformation<?> typeInfo, DataType dataType) {

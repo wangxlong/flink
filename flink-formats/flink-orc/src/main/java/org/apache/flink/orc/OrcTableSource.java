@@ -26,25 +26,28 @@ import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.typeutils.RowTypeInfo;
 import org.apache.flink.orc.OrcSplitReader.Predicate;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.TableSchema;
-import org.apache.flink.table.expressions.Attribute;
-import org.apache.flink.table.expressions.BinaryComparison;
-import org.apache.flink.table.expressions.EqualTo;
+import org.apache.flink.table.planner.expressions.Attribute;
+import org.apache.flink.table.planner.expressions.BinaryComparison;
+import org.apache.flink.table.planner.expressions.EqualTo;
 import org.apache.flink.table.expressions.Expression;
-import org.apache.flink.table.expressions.GreaterThan;
-import org.apache.flink.table.expressions.GreaterThanOrEqual;
-import org.apache.flink.table.expressions.IsNotNull;
-import org.apache.flink.table.expressions.IsNull;
-import org.apache.flink.table.expressions.LessThan;
-import org.apache.flink.table.expressions.LessThanOrEqual;
-import org.apache.flink.table.expressions.Literal;
-import org.apache.flink.table.expressions.Not;
-import org.apache.flink.table.expressions.NotEqualTo;
-import org.apache.flink.table.expressions.Or;
-import org.apache.flink.table.expressions.UnaryExpression;
+import org.apache.flink.table.planner.expressions.GreaterThan;
+import org.apache.flink.table.planner.expressions.GreaterThanOrEqual;
+import org.apache.flink.table.planner.expressions.IsNotNull;
+import org.apache.flink.table.planner.expressions.IsNull;
+import org.apache.flink.table.planner.expressions.LessThan;
+import org.apache.flink.table.planner.expressions.LessThanOrEqual;
+import org.apache.flink.table.planner.expressions.Literal;
+import org.apache.flink.table.planner.expressions.Not;
+import org.apache.flink.table.planner.expressions.NotEqualTo;
+import org.apache.flink.table.planner.expressions.Or;
+import org.apache.flink.table.planner.expressions.UnaryExpression;
 import org.apache.flink.table.sources.BatchTableSource;
 import org.apache.flink.table.sources.FilterableTableSource;
 import org.apache.flink.table.sources.ProjectableTableSource;
+import org.apache.flink.table.sources.StreamTableSource;
 import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.types.Row;
 import org.apache.flink.util.Preconditions;
@@ -80,7 +83,7 @@ import java.util.List;
  * </pre>
  */
 public class OrcTableSource
-	implements BatchTableSource<Row>, ProjectableTableSource<Row>, FilterableTableSource<Row> {
+	implements StreamTableSource<Row>, ProjectableTableSource<Row>, FilterableTableSource<Row> {
 
 	private static final Logger LOG = LoggerFactory.getLogger(OrcTableSource.class);
 
@@ -150,21 +153,6 @@ public class OrcTableSource
 			typeInfoFromSchema.getFieldNames(),
 			typeInfoFromSchema.getFieldTypes()
 		);
-	}
-
-	@Override
-	public DataSet<Row> getDataSet(ExecutionEnvironment execEnv) {
-		OrcRowInputFormat orcIF = buildOrcInputFormat();
-		orcIF.setNestedFileEnumeration(recursiveEnumeration);
-		if (selectedFields != null) {
-			orcIF.selectFields(selectedFields);
-		}
-		if (predicates != null) {
-			for (OrcSplitReader.Predicate pred : predicates) {
-				orcIF.addPredicate(pred);
-			}
-		}
-		return execEnv.createInput(orcIF).name(explainSource());
 	}
 
 	@VisibleForTesting
@@ -426,6 +414,26 @@ public class OrcTableSource
 
 	public static Builder builder() {
 		return new Builder();
+	}
+
+	@Override
+	public boolean isBounded() {
+		return true;
+	}
+
+	@Override
+	public DataStream<Row> getDataStream(StreamExecutionEnvironment execEnv) {
+		OrcRowInputFormat orcIF = buildOrcInputFormat();
+		orcIF.setNestedFileEnumeration(recursiveEnumeration);
+		if (selectedFields != null) {
+			orcIF.selectFields(selectedFields);
+		}
+		if (predicates != null) {
+			for (OrcSplitReader.Predicate pred : predicates) {
+				orcIF.addPredicate(pred);
+			}
+		}
+		return execEnv.createInput(orcIF).name(explainSource());
 	}
 
 	/**

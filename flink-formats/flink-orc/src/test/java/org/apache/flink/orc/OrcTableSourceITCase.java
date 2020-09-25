@@ -20,12 +20,15 @@ package org.apache.flink.orc;
 
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.bridge.java.BatchTableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentInternal;
 import org.apache.flink.test.util.MultipleProgramsTestBase;
 import org.apache.flink.types.Row;
 
+import org.apache.flink.util.CollectionUtil;
 import org.junit.Test;
 
 import java.util.List;
@@ -48,8 +51,9 @@ public class OrcTableSourceITCase extends MultipleProgramsTestBase {
 	@Test
 	public void testFullScan() throws Exception {
 
-		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		BatchTableEnvironment tEnv = BatchTableEnvironment.create(env);
+		EnvironmentSettings batchSettings =
+			EnvironmentSettings.newInstance().inBatchMode().useBlinkPlanner().build();
+		TableEnvironment tEnv = TableEnvironment.create(batchSettings);
 
 		OrcTableSource orc = OrcTableSource.builder()
 			.path(getPath(TEST_FILE_FLAT))
@@ -69,22 +73,22 @@ public class OrcTableSourceITCase extends MultipleProgramsTestBase {
 				"MIN(_col7), MAX(_col7), " +
 				"MIN(_col8), MAX(_col8) " +
 			"FROM OrcTable";
-		Table t = tEnv.sqlQuery(query);
+		Table table = tEnv.sqlQuery(query);
 
-		DataSet<Row> dataSet = tEnv.toDataSet(t, Row.class);
-		List<Row> result = dataSet.collect();
+		List<Row> results = CollectionUtil.iteratorToList(table.execute().collect());
 
-		assertEquals(1, result.size());
+		assertEquals(1, results.size());
 		assertEquals(
 			"1920800,1,1920800,F,M,D,W,2 yr Degree,Unknown,500,10000,Good,Unknown,0,6,0,6,0,6",
-			result.get(0).toString());
+			results.get(0).toString());
 	}
 
 	@Test
 	public void testScanWithProjectionAndFilter() throws Exception {
 
-		ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
-		BatchTableEnvironment tEnv = BatchTableEnvironment.create(env);
+		EnvironmentSettings batchSettings =
+			EnvironmentSettings.newInstance().inBatchMode().useBlinkPlanner().build();
+		TableEnvironment tEnv = TableEnvironment.create(batchSettings);
 
 		OrcTableSource orc = OrcTableSource.builder()
 			.path(getPath(TEST_FILE_FLAT))
@@ -103,13 +107,12 @@ public class OrcTableSourceITCase extends MultipleProgramsTestBase {
 				"WHERE (_col0 BETWEEN 4975 and 5024 OR _col0 BETWEEN 9975 AND 10024) AND _col1 = 'F'";
 		Table t = tEnv.sqlQuery(query);
 
-		DataSet<Row> dataSet = tEnv.toDataSet(t, Row.class);
-		List<Row> result = dataSet.collect();
+		List<Row> results = CollectionUtil.iteratorToList(t.execute().collect());
 
-		assertEquals(1, result.size());
+		assertEquals(1, results.size());
 		assertEquals(
 			"1500,6000,2 yr Degree,Unknown,4976,10024,D,W,50",
-			result.get(0).toString());
+			results.get(0).toString());
 	}
 
 	private String getPath(String fileName) {
