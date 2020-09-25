@@ -19,6 +19,7 @@ org.apache.flink.table.planner.utils.TestPartitionableSourceFactory
 org.apache.flink.table.planner.utils.TestLegacyFilterableTableSourceFactory
 org.apache.flink.table.planner.utils.TestLegacyProjectableTableSourceFactory
 org.apache.flink.table.planner.utils.TestOptionsTableFactory
+org.apache.flink.table.planner.factories.utils.TestTableFormatFactory
 
 org.apache.flink.table.planner.utils.WithoutTimeAttributesTableSourceFactory
 org.apache.flink.table.planner.plan.stream.sql.join.TestTemporalTableFactory
