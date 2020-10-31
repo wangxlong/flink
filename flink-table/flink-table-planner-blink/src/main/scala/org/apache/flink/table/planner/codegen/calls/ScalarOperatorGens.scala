@@ -571,7 +571,8 @@ object ScalarOperatorGens {
       else if (isBinaryString(left.resultType) &&
           isInteroperable(left.resultType, right.resultType)) {
         (leftTerm, rightTerm) =>
-          s"java.util.Arrays.equals($leftTerm, $rightTerm)"
+          s"org.apache.flink.table.runtime.functions." +
+              s"SqlFunctionUtils.byteArrayCompare($leftTerm, $rightTerm) $operator 0"
       }
       // both sides are same comparable type
       else if (isComparable(left.resultType) &&

@@ -1116,4 +1116,26 @@ public class SqlFunctionUtils {
 	public static float struncate(float b0, int b1) {
 		return (float) doubleValue(struncate(castFrom((double) b0, 38, 18), b1));
 	}
+
+	/**
+	 * Compare between two byte arrays.
+	 * The result is 1 if array1 is great than array2,
+	 * -1 if array1 is less than array2 and 0 if array1 is equal array2.
+	 * Note: Currently, this is used in {@code ScalarOperatorGens}
+	 * for comparing two fields of binary or varbinary type.
+	 *
+	 * @param array1 byte array1 to be compared.
+	 * @param array2 byte array2 to be compared.
+	 * @return Target value.
+	 */
+	public static int byteArrayCompare(byte[] array1, byte[] array2) {
+		for (int i = 0, j = 0; i < array1.length && j < array2.length; i++, j++) {
+			int a = (array1[i] & 0xff);
+			int b = (array2[j] & 0xff);
+			if (a != b) {
+				return a - b;
+			}
+		}
+		return array1.length - array2.length;
+	}
 }
