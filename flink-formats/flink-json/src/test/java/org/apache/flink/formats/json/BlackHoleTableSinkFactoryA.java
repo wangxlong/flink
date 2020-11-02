@@ -16,18 +16,19 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.factories;
+package org.apache.flink.formats.json;
 
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.ReadableConfig;
-import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.connector.format.EncodingFormat;
 import org.apache.flink.table.connector.sink.DynamicTableSink;
 import org.apache.flink.table.connector.sink.SinkFunctionProvider;
 import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.factories.DynamicTableSinkFactory;
+import org.apache.flink.table.factories.FactoryUtil;
+import org.apache.flink.table.factories.SerializationFormatFactory;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.types.RowKind;
 
@@ -43,9 +44,9 @@ import static org.apache.flink.table.factories.FactoryUtil.createTableFactoryHel
  * Just like /dev/null device on Unix-like operating systems.
  */
 @PublicEvolving
-public class BlackHoleTableSinkFactory implements DynamicTableSinkFactory {
+public class BlackHoleTableSinkFactoryA implements DynamicTableSinkFactory {
 
-	public static final String IDENTIFIER = "blackhole";
+	public static final String IDENTIFIER = "Myblackhole";
 
 	@Override
 	public String factoryIdentifier() {
@@ -59,9 +60,7 @@ public class BlackHoleTableSinkFactory implements DynamicTableSinkFactory {
 
 	@Override
 	public Set<ConfigOption<?>> optionalOptions() {
-		final Set<ConfigOption<?>> options = new HashSet<>();
-		options.add(FactoryUtil.FORMAT);
-		return options;
+		return new HashSet<>();
 	}
 
 	@Override
@@ -73,6 +72,7 @@ public class BlackHoleTableSinkFactory implements DynamicTableSinkFactory {
 		EncodingFormat<SerializationSchema<RowData>> encodingFormat = helper.discoverEncodingFormat(
 			SerializationFormatFactory.class,
 			FactoryUtil.FORMAT);
+
 		final DataType physicalDataType = context.getCatalogTable().getSchema().toPhysicalRowDataType();
 
 		return new BlackHoleSink(encodingFormat, physicalDataType);
@@ -80,10 +80,13 @@ public class BlackHoleTableSinkFactory implements DynamicTableSinkFactory {
 
 	private static class BlackHoleSink implements DynamicTableSink {
 
-		private transient EncodingFormat<SerializationSchema<RowData>> a;
+		private transient EncodingFormat<SerializationSchema<RowData>> encodingFormat;
 		DataType physicalDataType;
-		public BlackHoleSink(EncodingFormat<SerializationSchema<RowData>> a, DataType physicalDataType){
-			this.a = a;
+
+		public BlackHoleSink(
+			EncodingFormat<SerializationSchema<RowData>> encodingFormat,
+			DataType physicalDataType){
+			this.encodingFormat = encodingFormat;
 			this.physicalDataType = physicalDataType;
 		}
 
@@ -99,17 +102,15 @@ public class BlackHoleTableSinkFactory implements DynamicTableSinkFactory {
 		}
 
 		@Override
-		public SinkRuntimeProvider getSinkRuntimeProvider(DynamicTableSink.Context context) {
+		public SinkRuntimeProvider getSinkRuntimeProvider(Context context) {
 			final SerializationSchema<RowData> valueSerialization =
-				this.a.createRuntimeEncoder(context, this.physicalDataType);
-			DiscardingSink<RowData> ccc = new DiscardingSink<RowData>();
-			ccc.setValueSerialization(valueSerialization);
-			return SinkFunctionProvider.of(ccc);
+				this.encodingFormat.createRuntimeEncoder(context, this.physicalDataType);
+			return SinkFunctionProvider.of(new DiscardingSink<RowData>(valueSerialization));
 		}
 
 		@Override
 		public DynamicTableSink copy() {
-			return new BlackHoleSink(a, physicalDataType);
+			return new BlackHoleSink(encodingFormat, physicalDataType);
 		}
 
 		@Override

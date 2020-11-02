@@ -31,13 +31,17 @@ import org.apache.flink.table.filesystem.FileSystemOptions._
 import org.apache.flink.table.planner.runtime.utils.{StreamingTestBase, TestSinkUtil}
 import org.apache.flink.types.Row
 import org.apache.flink.util.CollectionUtil
-
 import org.junit.Assert.assertEquals
 import org.junit.rules.Timeout
 import org.junit.{Assert, Before, Rule, Test}
-
 import java.io.File
 import java.net.URI
+import java.util
+
+import org.apache.flink.api.common.ExecutionConfig
+import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer
+import org.apache.flink.table.planner.runtime.utils.UserDefinedFunctionTestUtils.MyMapStringFunc
+import org.apache.flink.table.types.logical.RawType
 
 import scala.collection.JavaConversions._
 import scala.collection.Seq
@@ -93,12 +97,19 @@ abstract class FsStreamingSinkITCaseBase extends StreamingTestBase {
     Assert.assertTrue(new File(new File(basePath, "e=11"), "_MY_SUCCESS").exists())
   }
 
-  private def test(partition: Boolean, policy: String = "success-file"): Unit = {
+  @Test
+  def testMap(): Unit = {
+    val partition: Boolean = true
+    val policy: String = "success-file"
     val dollar = '$'
+    val rawType = new RawType(
+      classOf[util.HashMap[String, String]],
+      new KryoSerializer(classOf[util.HashMap[String, String]], new ExecutionConfig))
+    //RAW('java.util.HashMap', '${rawType.asSerializableString()}'),
     val ddl = s"""
                  |create table sink_table (
                  |  a int,
-                 |  b string,
+                 |  b RAW('java.util.HashMap', ${rawType.asSerializableString()}'),
                  |  c string,
                  |  d string,
                  |  e string
@@ -116,8 +127,40 @@ abstract class FsStreamingSinkITCaseBase extends StreamingTestBase {
                  |)
        """.stripMargin
     tEnv.executeSql(ddl)
+    tEnv.registerFunction("mapfunc", MyMapStringFunc)
+    tEnv.sqlQuery("select a, mapfunc() as b, c, d, e  from my_table").executeInsert("sink_table").await()
 
-    tEnv.sqlQuery("select * from my_table").executeInsert("sink_table").await()
+    check(
+      ddl,
+      "select * from sink_table",
+      data)
+  }
+
+  private def test(partition: Boolean, policy: String = "success-file"): Unit = {
+    val dollar = '$'
+    val ddl = s"""
+                 |create table sink_table (
+                 |  a int,
+                 |  b STRING,
+                 |  c string,
+                 |  d string,
+                 |  e string,
+                 |)
+                 |${if (partition) "partitioned by (d, e)" else ""}
+                 |with (
+                 |  'connector' = 'filesystem',
+                 |  'path' = '$resultPath',
+                 |  '${PARTITION_TIME_EXTRACTOR_TIMESTAMP_PATTERN.key()}' =
+                 |      '${dollar}d ${dollar}e:00:00',
+                 |  '${SINK_PARTITION_COMMIT_DELAY.key()}' = '1h',
+                 |  '${SINK_PARTITION_COMMIT_POLICY_KIND.key()}' = '$policy',
+                 |  '${SINK_PARTITION_COMMIT_SUCCESS_FILE_NAME.key()}' = '_MY_SUCCESS',
+                 |  ${additionalProperties().mkString(",\n")}
+                 |)
+       """.stripMargin
+    tEnv.executeSql(ddl)
+
+    tEnv.sqlQuery("select *, MAP['1', '2'] from my_table").executeInsert("sink_table").await()
 
     check(
       ddl,

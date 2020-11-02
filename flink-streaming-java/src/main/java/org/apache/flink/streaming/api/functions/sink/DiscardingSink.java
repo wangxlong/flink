@@ -19,6 +19,7 @@
 package org.apache.flink.streaming.api.functions.sink;
 
 import org.apache.flink.annotation.Public;
+import org.apache.flink.api.common.serialization.SerializationSchema;
 
 /**
  * A stream sink that ignores all elements.
@@ -27,9 +28,19 @@ import org.apache.flink.annotation.Public;
  */
 @Public
 public class DiscardingSink<T> implements SinkFunction<T> {
+	public void setValueSerialization(SerializationSchema valueSerialization) {
+		this.valueSerialization = valueSerialization;
+	}
+
+	SerializationSchema valueSerialization;
+
+	public DiscardingSink() {
+	}
 
 	private static final long serialVersionUID = 1L;
 
 	@Override
-	public void invoke(T value) {}
+	public void invoke(T value) {
+		valueSerialization.serialize(value);
+	}
 }

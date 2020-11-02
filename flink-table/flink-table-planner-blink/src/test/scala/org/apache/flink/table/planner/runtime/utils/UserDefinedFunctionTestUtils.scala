@@ -42,6 +42,7 @@ import java.util
 import java.util.TimeZone
 import java.util.concurrent.atomic.AtomicInteger
 
+import collection.JavaConverters._
 import scala.annotation.varargs
 
 object UserDefinedFunctionTestUtils {
@@ -198,6 +199,16 @@ object UserDefinedFunctionTestUtils {
   @SerialVersionUID(1L)
   object MyStringFunc extends ScalarFunction {
     def eval(s: String): String = s + "haha"
+  }
+
+  @SerialVersionUID(1L)
+  object MyMapStringFunc extends ScalarFunction {
+    def eval(): util.HashMap[String, String] = {
+      val map = new util.HashMap[String, String]()
+      map.put("a", "c")
+      map.put(null, "c")
+      map
+    }
   }
 
   @SerialVersionUID(1L)

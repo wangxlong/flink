@@ -234,6 +234,8 @@ public class RowDataToJsonConverters implements Serializable {
 					"The type is: " + typeSummary);
 		}
 		final RowDataToJsonConverter valueConverter = createConverter(valueType);
+		final RowDataToJsonConverter keyConverter = createConverter(keyType);
+		final ArrayData.ElementGetter keyGetter = ArrayData.createElementGetter(keyType);
 		final ArrayData.ElementGetter valueGetter = ArrayData.createElementGetter(valueType);
 		return (mapper, reuse, object) -> {
 			ObjectNode node;
@@ -249,9 +251,14 @@ public class RowDataToJsonConverters implements Serializable {
 			ArrayData valueArray = map.valueArray();
 			int numElements = map.size();
 			for (int i = 0; i < numElements; i++) {
-				String fieldName = keyArray.getString(i).toString(); // key must be string
+				//	String fieldName = keyArray.getString(i) == null ? null:  keyArray.getString(i).toString(); // key must be string
+				boolean aa = keyArray.isNullAt(i);
+				Object fieldName = keyGetter.getElementOrNull(keyArray, i);
+				System.out.println("fieldname = " + fieldName);
+
+//				String fieldName = keyArray.getString(i).toString(); // key must be string
 				Object value = valueGetter.getElementOrNull(valueArray, i);
-				node.set(fieldName, valueConverter.convert(mapper, node.get(fieldName), value));
+				node.set(fieldName == null ? null : fieldName.toString(), valueConverter.convert(mapper, null, value));
 			}
 
 			return node;

@@ -16,24 +16,24 @@
  * limitations under the License.
  */
 
-package org.apache.flink.table.planner.runtime.batch.sql
+package org.apache.flink.formats.json
 
-import org.apache.flink.table.planner.factories.TestValuesTableFactory
-import org.apache.flink.table.planner.runtime.utils.BatchAbstractTestBase.TEMPORARY_FOLDER
-import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
-import org.apache.flink.table.planner.runtime.utils.{BatchTestBase, TestData}
-import org.apache.flink.table.planner.utils._
-import org.apache.flink.types.Row
-import org.apache.flink.util.FileUtils
-import org.junit.{Before, Test}
 import java.lang.{Boolean => JBool, Integer => JInt, Long => JLong}
 import java.util
 
 import org.apache.flink.api.common.ExecutionConfig
 import org.apache.flink.api.java.typeutils.runtime.kryo.KryoSerializer
 import org.apache.flink.table.filesystem.FileSystemOptions.{PARTITION_TIME_EXTRACTOR_TIMESTAMP_PATTERN, SINK_PARTITION_COMMIT_DELAY, SINK_PARTITION_COMMIT_POLICY_KIND, SINK_PARTITION_COMMIT_SUCCESS_FILE_NAME}
+import org.apache.flink.table.planner.factories.TestValuesTableFactory
+import org.apache.flink.table.planner.runtime.utils.BatchAbstractTestBase.TEMPORARY_FOLDER
+import org.apache.flink.table.planner.runtime.utils.BatchTestBase.row
 import org.apache.flink.table.planner.runtime.utils.UserDefinedFunctionTestUtils.MyMapStringFunc
+import org.apache.flink.table.planner.runtime.utils.{BatchTestBase, TestData}
+import org.apache.flink.table.planner.utils._
 import org.apache.flink.table.types.logical.RawType
+import org.apache.flink.types.Row
+import org.apache.flink.util.FileUtils
+import org.junit.{Before, Test}
 
 class TableSourceITCase extends BatchTestBase {
 
@@ -263,7 +263,7 @@ class TableSourceITCase extends BatchTestBase {
          |""".stripMargin
     )
 
-    val partition: Boolean = true
+    val partition: Boolean = false
     val policy: String = "success-file"
     val dollar = '$'
     val rawType = new RawType(
@@ -274,51 +274,30 @@ class TableSourceITCase extends BatchTestBase {
     val ddl = s"""
                  |create table sink_table (
                  |  a int,
-                 |  b Map<String, String>,
-                 |  c string,
-                 |  d string,
-                 |  e string
+                 |  b Map<String, INT>,
+                 |  c VARCHAR(5),
+                 |  d VARCHAR(5),
+                 |  e VARCHAR(5)
                  |)
                  |${if (partition) "partitioned by (d, e)" else ""}
                  |with (
-                 |  'connector' = 'filesystem',
-                 |  'path' = '/Users/didi/desktop/',
-                 |  '${PARTITION_TIME_EXTRACTOR_TIMESTAMP_PATTERN.key()}' =
-                 |      '${dollar}d ${dollar}e:00:00',
-                 |  '${SINK_PARTITION_COMMIT_DELAY.key()}' = '1h',
-                 |  '${SINK_PARTITION_COMMIT_POLICY_KIND.key()}' = '$policy',
-                 |  '${SINK_PARTITION_COMMIT_SUCCESS_FILE_NAME.key()}' = '_MY_SUCCESS',
+                 |  'connector' = 'blackhole',
+
+
                  |  'format'='json'
                  |)
        """.stripMargin
+
+    //                 |  '${PARTITION_TIME_EXTRACTOR_TIMESTAMP_PATTERN.key()}' =
+    //                 |      '${dollar}d ${dollar}e:00:00',
+    //                 |  '${SINK_PARTITION_COMMIT_DELAY.key()}' = '1h',
+    //                 |  '${SINK_PARTITION_COMMIT_POLICY_KIND.key()}' = '$policy',
+    //                 |  '${SINK_PARTITION_COMMIT_SUCCESS_FILE_NAME.key()}' = '_MY_SUCCESS',
+
     tEnv.executeSql(ddl)
     tEnv.registerFunction("mapfunc", MyMapStringFunc)
-    tEnv.executeSql("insert into sink_table SELECT q FROM T");
+    tEnv.executeSql("insert into sink_table SELECT d, q, i as c, i as d , i as e FROM T").await()
 
-    checkResult(
-      "SELECT q FROM T",
-      Seq(
-        row(
-          true, 127, 32767, 2147483647, 9223372036854775807L, "-1.123", "-1.123", "5.10",
-          1, 1, "1969-01-01", "00:00:00.123", "1969-01-01T00:00:00.123456789",
-          "1969-01-01T00:00:00.123456789Z", "[1, 2, 3]", row(1, "a", "2.3"), "{k1=1}"),
-        row(
-          false, -128, -32768, -2147483648, -9223372036854775808L, "3.4", "3.4", "6.10",
-          12, 12, "1970-09-30", "01:01:01.123", "1970-09-30T01:01:01.123456",
-          "1970-09-30T01:01:01.123456Z", "[4, 5]", row(null, "b", "4.56"), "{k2=2, k4=4}"),
-        row(
-          true, 0, 0, 0, 0, "0.12", "0.12", "7.10",
-          123, 123, "1990-12-24", "08:10:24.123", "1990-12-24T08:10:24.123",
-          "1990-12-24T08:10:24.123Z", "[6, null, 7]", row(3, null, "7.86"), "{k3=null}"),
-        row(
-          false, 5, 4, 123, 1234, "1.2345", "1.2345", "8.12",
-          1234, 1234, "2020-05-01", "23:23:23", "2020-05-01T23:23:23",
-          "2020-05-01T23:23:23Z", "[8]", row(4, "c", null), "{null=3}"),
-        row(
-          null, null, null, null, null, null, null, null, null, null, null, null, null,
-          null, null, null, null)
-      )
-    )
   }
 
   @Test

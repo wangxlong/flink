@@ -19,7 +19,12 @@
 package org.apache.flink.formats.json;
 
 import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.table.data.GenericMapData;
+import org.apache.flink.table.data.GenericRowData;
+import org.apache.flink.table.data.MapData;
 import org.apache.flink.table.data.RowData;
+import org.apache.flink.table.data.StringData;
+import org.apache.flink.table.data.binary.BinaryStringData;
 import org.apache.flink.table.data.util.DataFormatConverters;
 import org.apache.flink.table.runtime.typeutils.InternalTypeInfo;
 import org.apache.flink.table.types.DataType;
@@ -313,6 +318,28 @@ public class JsonRowDataSerDeSchemaTest {
 			String result = new String(serializationSchema.serialize(row));
 			assertEquals(expected[i], result);
 		}
+	}
+
+	@Test
+	public void testSerDeMultiRowsWithNullValuesa() throws Exception {
+
+
+		GenericRowData rowData = new GenericRowData(2);
+		HashMap map = new HashMap();
+		map.put(new BinaryStringData("a"), new BinaryStringData("c"));
+		map.put(null,  new BinaryStringData("c"));
+		GenericMapData mapData = new GenericMapData(map);
+		rowData.setField(0, 1);
+		rowData.setField(1, mapData);
+
+		RowType serrowType = (RowType) ROW(
+			FIELD("svt", INT()),
+			FIELD("metrics", MAP(STRING(), STRING()))
+		).getLogicalType();
+
+		JsonRowDataSerializationSchema serializationSchema = new JsonRowDataSerializationSchema(serrowType, TimestampFormat.ISO_8601);
+		String result = new String(serializationSchema.serialize(rowData));
+
 	}
 
 	@Test
