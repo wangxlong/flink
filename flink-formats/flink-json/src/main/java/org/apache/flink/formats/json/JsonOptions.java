@@ -22,6 +22,7 @@ import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.table.api.TableException;
+import org.apache.flink.table.api.ValidationException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -36,14 +37,28 @@ public class JsonOptions {
 			.key("fail-on-missing-field")
 			.booleanType()
 			.defaultValue(false)
-			.withDescription("Optional flag to specify whether to fail if a field is missing or not, false by default");
+			.withDescription("Optional flag to specify whether to fail if a field is missing or not, false by default.");
 
 	public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS = ConfigOptions
 			.key("ignore-parse-errors")
 			.booleanType()
 			.defaultValue(false)
 			.withDescription("Optional flag to skip fields and rows with parse errors instead of failing;\n"
-					+ "fields are set to null in case of errors, false by default");
+					+ "fields are set to null in case of errors, false by default.");
+
+	public static final ConfigOption<String> MAP_NULL_KEY_MODE = ConfigOptions
+		.key("map-null-key.mode")
+		.stringType()
+		.defaultValue("FAIL")
+		.withDescription("Optional flag to control the handling mode when serializing null key for map data, FAIL by default."
+			+ " Option DROP will drop null key entries for map data."
+			+ " Option LITERAL will use 'map-null-key.literal' as key literal.");
+
+	public static final ConfigOption<String> MAP_NULL_KEY_LITERAL = ConfigOptions
+		.key("map-null-key.literal")
+		.stringType()
+		.defaultValue("null")
+		.withDescription("Optional flag to specify string literal when 'map-null-key.literal' is LITERAL, \"null\" by default.");
 
 	public static final ConfigOption<String> TIMESTAMP_FORMAT = ConfigOptions
 			.key("timestamp-format.standard")
@@ -65,6 +80,17 @@ public class JsonOptions {
 		ISO_8601
 	));
 
+	// The handling mode of null key for map data
+	public static final String JSON_MAP_NULL_KEY_MODE_FAIL = "FAIL";
+	public static final String JSON_MAP_NULL_KEY_MODE_DROP = "DROP";
+	public static final String JSON_MAP_NULL_KEY_MODE_LITERAL = "LITERAL";
+
+	public static final Set<String> JSON_MAP_NULL_KEY_MODE_ENUM = new HashSet<>(Arrays.asList(
+		JSON_MAP_NULL_KEY_MODE_FAIL,
+		JSON_MAP_NULL_KEY_MODE_DROP,
+		JSON_MAP_NULL_KEY_MODE_LITERAL
+	));
+
 	// --------------------------------------------------------------------------------------------
 	// Utilities
 	// --------------------------------------------------------------------------------------------
@@ -79,6 +105,82 @@ public class JsonOptions {
 			default:
 				throw new TableException(
 					String.format("Unsupported timestamp format '%s'. Validator should have checked that.", timestampFormat));
+		}
+	}
+
+	/**
+	 * Creates handling mode for null key map data.
+	 *
+	 * <p>See {@link #JSON_MAP_NULL_KEY_MODE_FAIL}, {@link #JSON_MAP_NULL_KEY_MODE_DROP},
+	 * and {@link #JSON_MAP_NULL_KEY_MODE_LITERAL} for more information.
+	 */
+	public static MapNullKeyMode getMapNullKeyMode(ReadableConfig config){
+		String mapNullKeyMode = config.get(MAP_NULL_KEY_MODE);
+		switch (mapNullKeyMode.toUpperCase()){
+			case JSON_MAP_NULL_KEY_MODE_FAIL:
+				return MapNullKeyMode.FAIL;
+			case JSON_MAP_NULL_KEY_MODE_DROP:
+				return MapNullKeyMode.DROP;
+			case JSON_MAP_NULL_KEY_MODE_LITERAL:
+				return MapNullKeyMode.LITERAL;
+			default:
+				throw new TableException(
+					String.format("Unsupported map null key handling mode '%s'. Validator should have checked that.", mapNullKeyMode));
+		}
+	}
+
+	// --------------------------------------------------------------------------------------------
+	// Inner classes
+	// --------------------------------------------------------------------------------------------
+
+	/** Handling mode for map data with null key. */
+	public enum MapNullKeyMode {
+		FAIL,
+		DROP,
+		LITERAL
+	}
+
+	// --------------------------------------------------------------------------------------------
+	// Validation
+	// --------------------------------------------------------------------------------------------
+
+	/**
+	 * Validator for decoding format.
+	 */
+	public static void validateDecodingFormatOptions(ReadableConfig tableOptions) {
+		boolean failOnMissingField = tableOptions.get(FAIL_ON_MISSING_FIELD);
+		boolean ignoreParseErrors = tableOptions.get(IGNORE_PARSE_ERRORS);
+		if (ignoreParseErrors && failOnMissingField) {
+			throw new ValidationException(FAIL_ON_MISSING_FIELD.key()
+				+ " and "
+				+ IGNORE_PARSE_ERRORS.key()
+				+ " shouldn't both be true.");
+		}
+		validateTimestampFormat(tableOptions);
+	}
+
+	/**
+	 * Validator for encoding format.
+	 */
+	public static void validateEncodingFormatOptions(ReadableConfig tableOptions) {
+		String mapNullKeyMode = tableOptions.get(MAP_NULL_KEY_MODE);
+		// validator for MAP_NULL_KEY_MODE
+		if (!JSON_MAP_NULL_KEY_MODE_ENUM.contains(mapNullKeyMode.toUpperCase())){
+			throw new ValidationException(
+				String.format("Unsupported value '%s' for %s. Supported values are [FAIL, DROP, LITERAL].",
+					mapNullKeyMode, MAP_NULL_KEY_MODE.key()));
+		}
+		validateTimestampFormat(tableOptions);
+	}
+
+	/**
+	 * Validates timestamp format which value should be SQL or ISO-8601.
+	 */
+	static void validateTimestampFormat(ReadableConfig tableOptions) {
+		String timestampFormat = tableOptions.get(TIMESTAMP_FORMAT);
+		if (!TIMESTAMP_FORMAT_ENUM.contains(timestampFormat)){
+			throw new ValidationException(String.format("Unsupported value '%s' for %s. Supported values are [SQL, ISO-8601].",
+				timestampFormat, TIMESTAMP_FORMAT.key()));
 		}
 	}
 }

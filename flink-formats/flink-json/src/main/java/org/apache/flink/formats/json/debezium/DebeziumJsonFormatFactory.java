@@ -43,6 +43,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.apache.flink.formats.json.JsonOptions.validateDecodingFormatOptions;
+import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOptions;
+
 /**
  * Format factory for providing configured instances of Debezium JSON to RowData {@link DeserializationSchema}.
  */
@@ -63,12 +66,17 @@ public class DebeziumJsonFormatFactory implements DeserializationFormatFactory, 
 
 	public static final ConfigOption<String> TIMESTAMP_FORMAT = JsonOptions.TIMESTAMP_FORMAT;
 
+	public static final ConfigOption<String> JSON_MAP_NULL_KEY_MODE = JsonOptions.MAP_NULL_KEY_MODE;
+
+	public static final ConfigOption<String> JSON_MAP_NULL_KEY_LITERAL = JsonOptions.MAP_NULL_KEY_LITERAL;
+
 	@Override
 	public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(
 			DynamicTableFactory.Context context,
 			ReadableConfig formatOptions) {
 
 		FactoryUtil.validateFactoryOptions(this, formatOptions);
+		validateDecodingFormatOptions(formatOptions);
 
 		final boolean schemaInclude = formatOptions.get(SCHEMA_INCLUDE);
 
@@ -85,7 +93,8 @@ public class DebeziumJsonFormatFactory implements DeserializationFormatFactory, 
 			ReadableConfig formatOptions) {
 
 		FactoryUtil.validateFactoryOptions(this, formatOptions);
-		TimestampFormat timestampFormat = JsonOptions.getTimestampFormat(formatOptions);
+		validateEncodingFormatOptions(formatOptions);
+
 		if (formatOptions.get(SCHEMA_INCLUDE)) {
 			throw new ValidationException(String.format(
 				"Debezium JSON serialization doesn't support '%s.%s' option been set to true.",
@@ -93,6 +102,10 @@ public class DebeziumJsonFormatFactory implements DeserializationFormatFactory, 
 				SCHEMA_INCLUDE.key()
 			));
 		}
+
+		TimestampFormat timestampFormat = JsonOptions.getTimestampFormat(formatOptions);
+		JsonOptions.MapNullKeyMode mapNullKeyMode = JsonOptions.getMapNullKeyMode(formatOptions);
+		String mapNullKeyLiteral = formatOptions.get(JSON_MAP_NULL_KEY_LITERAL);
 
 		return new EncodingFormat<SerializationSchema<RowData>>() {
 
@@ -109,7 +122,7 @@ public class DebeziumJsonFormatFactory implements DeserializationFormatFactory, 
 			@Override
 			public SerializationSchema<RowData> createRuntimeEncoder(DynamicTableSink.Context context, DataType consumedDataType) {
 				final RowType rowType = (RowType) consumedDataType.getLogicalType();
-				return new DebeziumJsonSerializationSchema(rowType, timestampFormat);
+				return new DebeziumJsonSerializationSchema(rowType, timestampFormat, mapNullKeyMode, mapNullKeyLiteral);
 			}
 		};
 	}
@@ -130,6 +143,8 @@ public class DebeziumJsonFormatFactory implements DeserializationFormatFactory, 
 		options.add(SCHEMA_INCLUDE);
 		options.add(IGNORE_PARSE_ERRORS);
 		options.add(TIMESTAMP_FORMAT);
+		options.add(JSON_MAP_NULL_KEY_MODE);
+		options.add(JSON_MAP_NULL_KEY_LITERAL);
 		return options;
 	}
 }
