@@ -28,6 +28,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import static org.apache.flink.formats.json.debezium.DebeziumJsonFormatFactory.IDENTIFIER;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonFormatFactory.SCHEMA_INCLUDE;
+
 /**
  * This class holds configuration constants used by json format.
  */
@@ -164,12 +167,21 @@ public class JsonOptions {
 	 */
 	public static void validateEncodingFormatOptions(ReadableConfig tableOptions) {
 		String mapNullKeyMode = tableOptions.get(MAP_NULL_KEY_MODE);
-		// validator for MAP_NULL_KEY_MODE
+		// validator for {@link MAP_NULL_KEY_MODE}
 		if (!JSON_MAP_NULL_KEY_MODE_ENUM.contains(mapNullKeyMode.toUpperCase())){
 			throw new ValidationException(
 				String.format("Unsupported value '%s' for %s. Supported values are [FAIL, DROP, LITERAL].",
 					mapNullKeyMode, MAP_NULL_KEY_MODE.key()));
 		}
+		// validator for {@link SCHEMA_INCLUDE}
+		if (tableOptions.get(SCHEMA_INCLUDE)) {
+			throw new ValidationException(String.format(
+				"Debezium JSON serialization doesn't support '%s.%s' option been set to true.",
+				IDENTIFIER,
+				SCHEMA_INCLUDE.key()
+			));
+		}
+
 		validateTimestampFormat(tableOptions);
 	}
 
