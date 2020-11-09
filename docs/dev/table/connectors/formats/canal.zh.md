@@ -192,7 +192,7 @@ Format 参数
        <ul>
          <li>Option <code>'FAIL'</code> 将抛出异常，如果遇到 Map 中 key 值为空的数据。</li>
          <li>Option <code>'DROP'</code> 将丢弃 Map 中 key 值为空的数据项。</li> 
-         <li>Option <code>'LITERAL'</code> 将使用字符串来替换 Map 中的空 key 值。字符串常量的值由 <code>'canal-json.map-null-key.literal'</code> 定义。</li>
+         <li>Option <code>'LITERAL'</code> 将使用字符串常量来替换 Map 中的空 key 值。字符串常量的值由 <code>'canal-json.map-null-key.literal'</code> 定义。</li>
        </ul>
        </td>
     </tr>
