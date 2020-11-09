@@ -21,7 +21,6 @@ package org.apache.flink.formats.json.debezium;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.formats.json.JsonOptions;
 import org.apache.flink.formats.json.TimestampFormat;
@@ -42,8 +41,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.apache.flink.formats.json.JsonOptions.validateDecodingFormatOptions;
-import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOptions;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.validateDecodingFormatOptions;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.validateEncodingFormatOptions;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.IGNORE_PARSE_ERRORS;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.JSON_MAP_NULL_KEY_LITERAL;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.JSON_MAP_NULL_KEY_MODE;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.SCHEMA_INCLUDE;
+import static org.apache.flink.formats.json.debezium.DebeziumJsonOptions.TIMESTAMP_FORMAT;
 
 /**
  * Format factory for providing configured instances of Debezium JSON to RowData {@link DeserializationSchema}.
@@ -51,23 +55,6 @@ import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOp
 public class DebeziumJsonFormatFactory implements DeserializationFormatFactory, SerializationFormatFactory {
 
 	public static final String IDENTIFIER = "debezium-json";
-
-	public static final ConfigOption<Boolean> SCHEMA_INCLUDE = ConfigOptions
-		.key("schema-include")
-		.booleanType()
-		.defaultValue(false)
-		.withDescription("When setting up a Debezium Kafka Connect, users can enable " +
-			"a Kafka configuration 'value.converter.schemas.enable' to include schema in the message. " +
-			"This option indicates the Debezium JSON data include the schema in the message or not. " +
-			"Default is false.");
-
-	public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS = JsonOptions.IGNORE_PARSE_ERRORS;
-
-	public static final ConfigOption<String> TIMESTAMP_FORMAT = JsonOptions.TIMESTAMP_FORMAT;
-
-	public static final ConfigOption<String> JSON_MAP_NULL_KEY_MODE = JsonOptions.MAP_NULL_KEY_MODE;
-
-	public static final ConfigOption<String> JSON_MAP_NULL_KEY_LITERAL = JsonOptions.MAP_NULL_KEY_LITERAL;
 
 	@Override
 	public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(

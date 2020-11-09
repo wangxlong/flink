@@ -22,7 +22,6 @@ import org.apache.flink.api.common.serialization.DeserializationSchema;
 import org.apache.flink.api.common.serialization.SerializationSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.configuration.ReadableConfig;
 import org.apache.flink.formats.json.JsonOptions;
 import org.apache.flink.formats.json.TimestampFormat;
@@ -44,8 +43,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.apache.flink.formats.json.JsonOptions.validateDecodingFormatOptions;
-import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOptions;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.DATABASE_INCLUDE;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.IGNORE_PARSE_ERRORS;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.JSON_MAP_NULL_KEY_LITERAL;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.JSON_MAP_NULL_KEY_MODE;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.TABLE_INCLUDE;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.TIMESTAMP_FORMAT;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.validateDecodingFormatOptions;
+import static org.apache.flink.formats.json.canal.CanalJsonOptions.validateEncodingFormatOptions;
 
 /**
  * Format factory for providing configured instances of Canal JSON to RowData {@link DeserializationSchema}.
@@ -53,26 +58,6 @@ import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOp
 public class CanalJsonFormatFactory implements DeserializationFormatFactory, SerializationFormatFactory {
 
 	public static final String IDENTIFIER = "canal-json";
-
-	public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS = JsonOptions.IGNORE_PARSE_ERRORS;
-
-	public static final ConfigOption<String> TIMESTAMP_FORMAT = JsonOptions.TIMESTAMP_FORMAT;
-
-	public static final ConfigOption<String> JSON_MAP_NULL_KEY_MODE = JsonOptions.MAP_NULL_KEY_MODE;
-
-	public static final ConfigOption<String> JSON_MAP_NULL_KEY_LITERAL = JsonOptions.MAP_NULL_KEY_LITERAL;
-
-	public static final ConfigOption<String> DATABASE_INCLUDE = ConfigOptions
-		.key("database.include")
-		.stringType()
-		.noDefaultValue()
-		.withDescription("Only read changelog rows which match the specific database (by comparing the \"database\" meta field in the record).");
-
-	public static final ConfigOption<String> TABLE_INCLUDE = ConfigOptions
-		.key("table.include")
-		.stringType()
-		.noDefaultValue()
-		.withDescription("Only read changelog rows which match the specific table (by comparing the \"table\" meta field in the record).");
 
 	@Override
 	public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(

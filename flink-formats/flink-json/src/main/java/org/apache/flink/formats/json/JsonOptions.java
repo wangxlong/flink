@@ -28,9 +28,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.apache.flink.formats.json.debezium.DebeziumJsonFormatFactory.IDENTIFIER;
-import static org.apache.flink.formats.json.debezium.DebeziumJsonFormatFactory.SCHEMA_INCLUDE;
-
 /**
  * This class holds configuration constants used by json format.
  */
@@ -148,7 +145,7 @@ public class JsonOptions {
 	// --------------------------------------------------------------------------------------------
 
 	/**
-	 * Validator for decoding format.
+	 * Validator for json decoding format.
 	 */
 	public static void validateDecodingFormatOptions(ReadableConfig tableOptions) {
 		boolean failOnMissingField = tableOptions.get(FAIL_ON_MISSING_FIELD);
@@ -163,7 +160,7 @@ public class JsonOptions {
 	}
 
 	/**
-	 * Validator for encoding format.
+	 * Validator for json encoding format.
 	 */
 	public static void validateEncodingFormatOptions(ReadableConfig tableOptions) {
 		String mapNullKeyMode = tableOptions.get(MAP_NULL_KEY_MODE);
@@ -173,15 +170,6 @@ public class JsonOptions {
 				String.format("Unsupported value '%s' for %s. Supported values are [FAIL, DROP, LITERAL].",
 					mapNullKeyMode, MAP_NULL_KEY_MODE.key()));
 		}
-		// validator for {@link SCHEMA_INCLUDE}
-		if (tableOptions.get(SCHEMA_INCLUDE)) {
-			throw new ValidationException(String.format(
-				"Debezium JSON serialization doesn't support '%s.%s' option been set to true.",
-				IDENTIFIER,
-				SCHEMA_INCLUDE.key()
-			));
-		}
-
 		validateTimestampFormat(tableOptions);
 	}
 

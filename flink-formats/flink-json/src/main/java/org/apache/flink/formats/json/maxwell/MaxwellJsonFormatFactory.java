@@ -43,8 +43,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.apache.flink.formats.json.JsonOptions.validateDecodingFormatOptions;
-import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOptions;
+import static org.apache.flink.formats.json.maxwell.MaxwellJsonOptions.validateDecodingFormatOptions;
+import static org.apache.flink.formats.json.maxwell.MaxwellJsonOptions.validateEncodingFormatOptions;
+import static org.apache.flink.formats.json.maxwell.MaxwellJsonOptions.IGNORE_PARSE_ERRORS;
+import static org.apache.flink.formats.json.maxwell.MaxwellJsonOptions.JSON_MAP_NULL_KEY_LITERAL;
+import static org.apache.flink.formats.json.maxwell.MaxwellJsonOptions.JSON_MAP_NULL_KEY_MODE;
+import static org.apache.flink.formats.json.maxwell.MaxwellJsonOptions.TIMESTAMP_FORMAT;
 
 /**
  * Format factory for providing configured instances of Maxwell JSON to RowData {@link DeserializationSchema}.
@@ -52,14 +56,6 @@ import static org.apache.flink.formats.json.JsonOptions.validateEncodingFormatOp
 public class MaxwellJsonFormatFactory implements DeserializationFormatFactory, SerializationFormatFactory {
 
 	public static final String IDENTIFIER = "maxwell-json";
-
-	public static final ConfigOption<Boolean> IGNORE_PARSE_ERRORS = JsonOptions.IGNORE_PARSE_ERRORS;
-
-	public static final ConfigOption<String> TIMESTAMP_FORMAT = JsonOptions.TIMESTAMP_FORMAT;
-
-	public static final ConfigOption<String> JSON_MAP_NULL_KEY_MODE = JsonOptions.MAP_NULL_KEY_MODE;
-
-	public static final ConfigOption<String> JSON_MAP_NULL_KEY_LITERAL = JsonOptions.MAP_NULL_KEY_LITERAL;
 
 	@Override
 	public DecodingFormat<DeserializationSchema<RowData>> createDecodingFormat(
