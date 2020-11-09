@@ -261,9 +261,8 @@ public class RowDataToJsonConverters implements Serializable {
 			ArrayData valueArray = map.valueArray();
 			int numElements = map.size();
 			for (int i = 0; i < numElements; i++) {
-				boolean isFieldNameNull = keyArray.isNullAt(i);
 				String fieldName = null;
-				if (isFieldNameNull) {
+				if (keyArray.isNullAt(i)) {
 					// when map key is null
 					switch (mapNullKeyMode) {
 						case LITERAL:
@@ -272,8 +271,10 @@ public class RowDataToJsonConverters implements Serializable {
 						case DROP:
 							continue;
 						case FAIL:
-							throw new RuntimeException("Map key is null, please have a check."
-								+ " You can setup null key handling mode to drop entry or replace with a no-null literal.");
+							throw new RuntimeException(String.format(
+								"JSON format doesn't support to serialize map data with null keys. "
+									+ "You can drop null key entries or encode null in literals by specifying %s option.",
+								JsonOptions.MAP_NULL_KEY_LITERAL.key()));
 						default:
 							throw new RuntimeException("Unsupported map null key mode. Validator should have checked that.");
 					}

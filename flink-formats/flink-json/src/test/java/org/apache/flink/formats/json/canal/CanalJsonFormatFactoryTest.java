@@ -148,7 +148,7 @@ public class CanalJsonFormatFactoryTest extends TestLogger {
 			getModifiedOptions(opts -> opts.put("canal-json.map-null-key.mode", "invalid"));
 
 		thrown.expect(ValidationException.class);
-		thrown.expect(containsCause(new ValidationException("Unsupported value 'invalid' for map-null-key.mode. Supported values are [FAIL, DROP, LITERAL].")));
+		thrown.expect(containsCause(new ValidationException("Unsupported value 'invalid' for option map-null-key.mode. Supported values are [LITERAL, FAIL, DROP].")));
 		createSerializationSchema(tableOptions);
 	}
 

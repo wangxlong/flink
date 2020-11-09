@@ -26,7 +26,9 @@ import org.apache.flink.table.api.ValidationException;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This class holds configuration constants used by json format.
@@ -58,7 +60,7 @@ public class JsonOptions {
 		.key("map-null-key.literal")
 		.stringType()
 		.defaultValue("null")
-		.withDescription("Optional flag to specify string literal when 'map-null-key.literal' is LITERAL, \"null\" by default.");
+		.withDescription("Optional flag to specify string literal for null keys when 'map-null-key.mode' is LITERAL, \"null\" by default.");
 
 	public static final ConfigOption<String> TIMESTAMP_FORMAT = ConfigOptions
 			.key("timestamp-format.standard")
@@ -84,12 +86,6 @@ public class JsonOptions {
 	public static final String JSON_MAP_NULL_KEY_MODE_FAIL = "FAIL";
 	public static final String JSON_MAP_NULL_KEY_MODE_DROP = "DROP";
 	public static final String JSON_MAP_NULL_KEY_MODE_LITERAL = "LITERAL";
-
-	public static final Set<String> JSON_MAP_NULL_KEY_MODE_ENUM = new HashSet<>(Arrays.asList(
-		JSON_MAP_NULL_KEY_MODE_FAIL,
-		JSON_MAP_NULL_KEY_MODE_DROP,
-		JSON_MAP_NULL_KEY_MODE_LITERAL
-	));
 
 	// --------------------------------------------------------------------------------------------
 	// Utilities
@@ -163,12 +159,16 @@ public class JsonOptions {
 	 * Validator for json encoding format.
 	 */
 	public static void validateEncodingFormatOptions(ReadableConfig tableOptions) {
-		String mapNullKeyMode = tableOptions.get(MAP_NULL_KEY_MODE);
 		// validator for {@link MAP_NULL_KEY_MODE}
-		if (!JSON_MAP_NULL_KEY_MODE_ENUM.contains(mapNullKeyMode.toUpperCase())){
-			throw new ValidationException(
-				String.format("Unsupported value '%s' for %s. Supported values are [FAIL, DROP, LITERAL].",
-					mapNullKeyMode, MAP_NULL_KEY_MODE.key()));
+		Set<String> nullKeyModes = Arrays.stream(MapNullKeyMode.values())
+			.map(Objects::toString)
+			.collect(Collectors.toSet());
+		if (!nullKeyModes.contains(tableOptions.get(MAP_NULL_KEY_MODE).toUpperCase())){
+			throw new ValidationException(String.format(
+				"Unsupported value '%s' for option %s. Supported values are %s.",
+				tableOptions.get(MAP_NULL_KEY_MODE),
+				MAP_NULL_KEY_MODE.key(),
+				nullKeyModes));
 		}
 		validateTimestampFormat(tableOptions);
 	}

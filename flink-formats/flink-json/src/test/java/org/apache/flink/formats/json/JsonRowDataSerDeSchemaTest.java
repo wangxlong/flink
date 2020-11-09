@@ -451,8 +451,8 @@ public class JsonRowDataSerDeSchemaTest {
 			new JsonRowDataSerializationSchema(
 				rowType, TimestampFormat.SQL, JsonOptions.MapNullKeyMode.FAIL, "null");
 		// expect message for serializationSchema1
-		String errorMessage1 = "Map key is null, please have a check."
-			+ " You can setup null key handling mode to drop entry or replace with a no-null literal.";
+		String errorMessage1 = "JSON format doesn't support to serialize map data with null keys."
+			+ " You can drop null key entries or encode null in literals by specifying map-null-key.literal option.";
 
 		JsonRowDataSerializationSchema serializationSchema2 =
 			new JsonRowDataSerializationSchema(

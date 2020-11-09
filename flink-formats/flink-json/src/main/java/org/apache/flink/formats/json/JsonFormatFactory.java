@@ -111,8 +111,10 @@ public class JsonFormatFactory implements
 					DataType consumedDataType) {
 				final RowType rowType = (RowType) consumedDataType.getLogicalType();
 				return new JsonRowDataSerializationSchema(
-						rowType, timestampOption,
-						mapNullKeyMode, mapNullKeyLiteral);
+						rowType,
+						timestampOption,
+						mapNullKeyMode,
+						mapNullKeyLiteral);
 			}
 
 			@Override

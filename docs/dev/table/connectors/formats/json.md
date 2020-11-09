@@ -126,7 +126,7 @@ Format Options
       <ul>
         <li>Option <code>'FAIL'</code> will throw exception when encountering map with null key.</li>
         <li>Option <code>'DROP'</code> will drop null key entries for map data.</li>
-        <li>Option <code>'LITERAL'</code> will replace null key with string literal.</li>
+        <li>Option <code>'LITERAL'</code> will replace null key with string literal. The string literal is defined by <code>json.map-null-key.literal</code> option.</li>
       </ul>
       </td>
     </tr>
@@ -135,7 +135,7 @@ Format Options
       <td>optional</td>
       <td style="word-wrap: break-word;">'null'</td>
       <td>String</td>
-      <td>Specify string literal to replace null key when <code>'json.map-null-key.literal'</code> is LITERAL.</td>
+      <td>Specify string literal to replace null key when <code>'json.map-null-key.mode'</code> is LITERAL.</td>
     </tr>     
     </tbody>
 </table>
