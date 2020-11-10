@@ -274,7 +274,7 @@ public class RowDataToJsonConverters implements Serializable {
 							throw new RuntimeException(String.format(
 								"JSON format doesn't support to serialize map data with null keys. "
 									+ "You can drop null key entries or encode null in literals by specifying %s option.",
-								JsonOptions.MAP_NULL_KEY_LITERAL.key()));
+								JsonOptions.MAP_NULL_KEY_MODE.key()));
 						default:
 							throw new RuntimeException("Unsupported map null key mode. Validator should have checked that.");
 					}
