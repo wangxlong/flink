@@ -281,9 +281,10 @@ class LookupJoinTest(legacyTableSource: Boolean) extends TableTestBase with Seri
 
   @Test
   def testJoinTemporalTableWithProjectionPushDown(): Unit = {
+    Assume.assumeFalse(legacyTableSource)
     val sql =
       """
-        |SELECT T.*, D.id
+        |SELECT T.a, D.id
         |FROM MyTable AS T
         |JOIN LookupTable FOR SYSTEM_TIME AS OF T.proctime AS D
         |ON T.a = D.id

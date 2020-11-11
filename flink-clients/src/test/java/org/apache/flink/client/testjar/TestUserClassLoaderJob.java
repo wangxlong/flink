@@ -31,7 +31,7 @@ public class TestUserClassLoaderJob {
 	public static void main(String[] args) throws Exception {
 		final StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
-		final DataStreamSource<Integer> source = env.fromElements(new TestUserClassLoaderJobLib().getValue(), 1, 2, 3, 4);
+		final DataStreamSource<Integer> source = env.fromElements(0, 1, 2, 3, 4);
 		final SingleOutputStreamOperator<Integer> mapper = source.map(element -> 2 * element);
 		mapper.addSink(new DiscardingSink<>());
 

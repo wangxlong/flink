@@ -1014,6 +1014,7 @@ public final class TestValuesTableFactory implements DynamicTableSourceFactory, 
 			this.isAsync = isAsync;
 		}
 
+
 		@SuppressWarnings({"unchecked", "rawtypes"})
 		@Override
 		public LookupRuntimeProvider getLookupRuntimeProvider(LookupContext context) {
@@ -1061,6 +1062,25 @@ public final class TestValuesTableFactory implements DynamicTableSourceFactory, 
 			} else {
 				return TableFunctionProvider.of(new TestValuesLookupFunction(mapping));
 			}
+		}
+
+		@Override
+		public DynamicTableSource copy() {
+			return new TestValuesScanLookupTableSource(producedDataType,
+				changelogMode,
+				bounded,
+				runtimeSource,
+				data,
+				isAsync,
+				lookupFunctionClass,
+				nestedProjectionSupported,
+				projectedPhysicalFields,
+				filterPredicates,
+				filterableFields,
+				limit,
+				allPartitions,
+				readableMetadata,
+				projectedMetadataFields);
 		}
 	}
 

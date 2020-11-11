@@ -354,6 +354,7 @@ object FlinkStreamRuleSets {
     SplitAggregateRule.INSTANCE,
     // transpose calc past snapshot
     CalcSnapshotTransposeRule.INSTANCE,
+//    PushProjectIntoLookupTableSourceScanRule.INSTANCE,
     // Rule that splits python ScalarFunctions from join conditions
     SplitPythonConditionFromJoinRule.INSTANCE,
     // Rule that splits python ScalarFunctions from

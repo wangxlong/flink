@@ -105,6 +105,10 @@ public class FlinkProjectJoinTransposeRule extends RelOptRule {
 						join.getLeft(),
 						true,
 						false);
+		if (leftProjRel.getRowType().getFieldCount()
+			== join.getLeft().getRowType().getFieldCount()) {
+			leftProjRel = join.getLeft();
+		}
 		RelNode rightProjRel =
 				pushProject.createProjectRefsAndExprs(
 						join.getRight(),
