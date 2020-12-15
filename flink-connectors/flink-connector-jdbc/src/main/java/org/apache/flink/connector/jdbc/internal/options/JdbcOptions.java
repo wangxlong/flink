@@ -101,10 +101,10 @@ public class JdbcOptions extends JdbcConnectionOptions {
 		}
 
 		/**
-		 * optional, CONNECTION_CHECK_TIMEOUT_SECONDS.
+		 * optional, connectionCheckTimeoutSeconds.
 		 */
-		public Builder setCONNECTION_CHECK_TIMEOUT_SECONDS(int setCONNECTION_CHECK_TIMEOUT_SECONDS) {
-			JdbcOptions.CONNECTION_CHECK_TIMEOUT_SECONDS = setCONNECTION_CHECK_TIMEOUT_SECONDS;
+		public Builder setConnectionCheckTimeoutSeconds(int connectionCheckTimeoutSeconds) {
+			JdbcOptions.CONNECTION_CHECK_TIMEOUT_SECONDS = connectionCheckTimeoutSeconds;
 			return this;
 		}
 		/**
