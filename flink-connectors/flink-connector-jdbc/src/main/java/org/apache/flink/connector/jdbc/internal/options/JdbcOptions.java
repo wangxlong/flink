@@ -34,7 +34,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final int CONNECTION_CHECK_TIMEOUT_SECONDS = 60;
+	public static  int CONNECTION_CHECK_TIMEOUT_SECONDS = 60;
 
 	private String tableName;
 	private JdbcDialect dialect;
@@ -101,13 +101,19 @@ public class JdbcOptions extends JdbcConnectionOptions {
 		}
 
 		/**
+		 * optional, CONNECTION_CHECK_TIMEOUT_SECONDS.
+		 */
+		public Builder setCONNECTION_CHECK_TIMEOUT_SECONDS(int setCONNECTION_CHECK_TIMEOUT_SECONDS) {
+			JdbcOptions.CONNECTION_CHECK_TIMEOUT_SECONDS = setCONNECTION_CHECK_TIMEOUT_SECONDS;
+			return this;
+		}
+		/**
 		 * optional, password.
 		 */
 		public Builder setPassword(String password) {
 			this.password = password;
 			return this;
 		}
-
 		/**
 		 * optional, driver name, dialect has a default driver name,
 		 * See {@link JdbcDialect#defaultDriverName}.
