@@ -310,6 +310,17 @@ public class JdbcDynamicTableFactoryTest {
 				"The value of 'sink.max-retries' option shouldn't be negative, but is -1.")
 				.isPresent());
 		}
+		// connection.check.timeout shouldn't be negative
+		try {
+			Map<String, String> properties = getAllOptions();
+			properties.put("connection.check.timeout", "-1");
+			createTableSource(properties);
+			fail("exception expected");
+		} catch (Throwable t) {
+			assertTrue(ExceptionUtils.findThrowableWithMessage(t,
+				"The value of 'connection.check.timeout' option shouldn't be negative, but is -1.")
+				.isPresent());
+		}
 	}
 
 	private Map<String, String> getAllOptions() {
