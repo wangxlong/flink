@@ -153,7 +153,11 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		.intType()
 		.defaultValue(3)
 		.withDescription("the max retry times if writing records to database failed.");
-
+	private static final ConfigOption<Integer> CONNECTION_CHECK_TIMEOUT_SECONDS = ConfigOptions
+		.key("connection.check.timeout")
+		.intType()
+		.defaultValue(60)
+		.withDescription("the duration of jdbc connector can check whether the connection is valid .");
 	@Override
 	public DynamicTableSink createDynamicTableSink(Context context) {
 		final FactoryUtil.TableFactoryHelper helper = FactoryUtil.createTableFactoryHelper(this, context);
@@ -191,6 +195,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		final JdbcOptions.Builder builder = JdbcOptions.builder()
 			.setDBUrl(url)
 			.setTableName(readableConfig.get(TABLE_NAME))
+			.setConnectionCheckTimeoutSeconds(readableConfig.get(CONNECTION_CHECK_TIMEOUT_SECONDS))
 			.setDialect(JdbcDialects.get(url).get());
 
 		readableConfig.getOptional(DRIVER).ifPresent(builder::setDriverName);
@@ -272,6 +277,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		optionalOptions.add(SINK_BUFFER_FLUSH_MAX_ROWS);
 		optionalOptions.add(SINK_BUFFER_FLUSH_INTERVAL);
 		optionalOptions.add(SINK_MAX_RETRIES);
+		optionalOptions.add(CONNECTION_CHECK_TIMEOUT_SECONDS);
 		return optionalOptions;
 	}
 
@@ -321,6 +327,13 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 				"The value of '%s' option shouldn't be negative, but is %s.",
 				SINK_MAX_RETRIES.key(),
 				config.get(SINK_MAX_RETRIES)));
+		}
+
+		if (config.get(CONNECTION_CHECK_TIMEOUT_SECONDS) < 0) {
+			throw new IllegalArgumentException(String.format(
+				"The value of '%s' option shouldn't be negative, but is %s.",
+				CONNECTION_CHECK_TIMEOUT_SECONDS.key(),
+				config.get(CONNECTION_CHECK_TIMEOUT_SECONDS)));
 		}
 	}
 

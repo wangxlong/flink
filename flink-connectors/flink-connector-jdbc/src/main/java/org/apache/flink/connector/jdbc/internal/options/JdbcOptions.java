@@ -34,7 +34,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 
 	private static final long serialVersionUID = 1L;
 
-	public static  int CONNECTION_CHECK_TIMEOUT_SECONDS = 60;
+	public static  int connectionCheckTimeoutSeconds = 60;
 
 	private String tableName;
 	private JdbcDialect dialect;
@@ -104,7 +104,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 		 * optional, connectionCheckTimeoutSeconds.
 		 */
 		public Builder setConnectionCheckTimeoutSeconds(int connectionCheckTimeoutSeconds) {
-			JdbcOptions.CONNECTION_CHECK_TIMEOUT_SECONDS = connectionCheckTimeoutSeconds;
+			JdbcOptions.connectionCheckTimeoutSeconds = connectionCheckTimeoutSeconds;
 			return this;
 		}
 		/**
