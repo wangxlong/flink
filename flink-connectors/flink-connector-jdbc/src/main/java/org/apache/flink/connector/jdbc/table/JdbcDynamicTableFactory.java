@@ -81,7 +81,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		.withDescription("the class name of the JDBC driver to use to connect to this URL. " +
 			"If not set, it will automatically be derived from the URL.");
 	public static final ConfigOption<Duration> MAX_RETRY_TIMEOUT = ConfigOptions
-		.key("max-retry-timeout")
+		.key("connection.max-retry-timeout")
 		.durationType()
 		.defaultValue(Duration.ofSeconds(60))
 		.withDescription("Maximum timeout between retries.");
@@ -196,7 +196,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		final JdbcOptions.Builder builder = JdbcOptions.builder()
 			.setDBUrl(url)
 			.setTableName(readableConfig.get(TABLE_NAME))
-			.setConnectionCheckTimeoutSeconds((int) readableConfig.get(MAX_RETRY_TIMEOUT).toMillis())
+			.setConnectionCheckTimeoutSeconds((int) readableConfig.get(MAX_RETRY_TIMEOUT).getSeconds())
 			.setDialect(JdbcDialects.get(url).get());
 
 		readableConfig.getOptional(DRIVER).ifPresent(builder::setDriverName);
@@ -330,6 +330,12 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 				config.get(SINK_MAX_RETRIES)));
 		}
 
+		if (config.get(MAX_RETRY_TIMEOUT).getSeconds() <= 0) {
+			throw new IllegalArgumentException(String.format(
+				"The value of '%s' option should be positive, but is %ss.",
+				MAX_RETRY_TIMEOUT.key(),
+				config.get(MAX_RETRY_TIMEOUT).getSeconds()));
+		}
 	}
 
 	private void checkAllOrNone(ReadableConfig config, ConfigOption<?>[] configOptions) {

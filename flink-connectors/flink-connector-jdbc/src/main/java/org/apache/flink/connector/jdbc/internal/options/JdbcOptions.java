@@ -53,7 +53,8 @@ public class JdbcOptions extends JdbcConnectionOptions {
 	public JdbcDialect getDialect() {
 		return dialect;
 	}
-	public  int getConnectionCheckTimeoutSeconds() { return connectionCheckTimeoutSeconds; }
+
+	public int getConnectionCheckTimeoutSeconds() { return connectionCheckTimeoutSeconds; }
 
 	public static Builder builder() {
 		return new Builder();
@@ -73,7 +74,9 @@ public class JdbcOptions extends JdbcConnectionOptions {
 		} else {
 			return false;
 		}
+
 	}
+
 	@Override
 	public int hashCode() {
 		return Objects.hash(url,
@@ -81,7 +84,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 			driverName,
 			username,
 			password,
-			dialect,
+			dialect.getClass().getName(),
 			connectionCheckTimeoutSeconds);
 	}
 
@@ -95,7 +98,8 @@ public class JdbcOptions extends JdbcConnectionOptions {
 		private String username;
 		private String password;
 		private JdbcDialect dialect;
-		private int connectionCheckTimeoutSeconds;
+		private int connectionCheckTimeoutSeconds = 60;
+
 		/**
 		 * required, table name.
 		 */
@@ -119,6 +123,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 			this.password = password;
 			return this;
 		}
+
 		/**
 		 * optional, connectionCheckTimeoutSeconds.
 		 */
@@ -126,6 +131,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 			this.connectionCheckTimeoutSeconds = connectionCheckTimeoutSeconds;
 			return this;
 		}
+
 		/**
 		 * optional, driver name, dialect has a default driver name,
 		 * See {@link JdbcDialect#defaultDriverName}.
@@ -147,6 +153,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 		 * optional, Handle the SQL dialect of jdbc driver. If not set, it will be infer by
 		 * {@link JdbcDialects#get} from DB url.
 		 */
+
 		public Builder setDialect(JdbcDialect dialect) {
 			this.dialect = dialect;
 			return this;
@@ -168,7 +175,7 @@ public class JdbcOptions extends JdbcConnectionOptions {
 				});
 			}
 
-			return new JdbcOptions(dbURL, tableName, driverName, username, password, dialect,connectionCheckTimeoutSeconds);
+			return new JdbcOptions(dbURL, tableName, driverName, username, password, dialect, connectionCheckTimeoutSeconds);
 		}
 	}
 }
