@@ -63,6 +63,7 @@ public class JdbcDynamicTableFactoryTest {
 		properties.put("driver", "org.apache.derby.jdbc.EmbeddedDriver");
 		properties.put("username", "user");
 		properties.put("password", "pass");
+		properties.put("max-retry-timeout", "120");
 
 		// validation for source
 		DynamicTableSource actualSource = createTableSource(properties);
@@ -72,6 +73,7 @@ public class JdbcDynamicTableFactoryTest {
 			.setDriverName("org.apache.derby.jdbc.EmbeddedDriver")
 			.setUsername("user")
 			.setPassword("pass")
+			.setConnectionCheckTimeoutSeconds(120)
 			.build();
 		JdbcLookupOptions lookupOptions = JdbcLookupOptions.builder()
 			.setCacheMaxSize(-1)
