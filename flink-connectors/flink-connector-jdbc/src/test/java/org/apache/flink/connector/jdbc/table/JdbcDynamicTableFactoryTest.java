@@ -41,7 +41,6 @@ import java.util.Map;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.apache.flink.connector.jdbc.internal.options.JdbcOptions.connectionCheckTimeoutSeconds;
 
 /**
  * Test for {@link JdbcTableSource} and {@link JdbcUpsertTableSink} created
@@ -64,7 +63,7 @@ public class JdbcDynamicTableFactoryTest {
 		properties.put("driver", "org.apache.derby.jdbc.EmbeddedDriver");
 		properties.put("username", "user");
 		properties.put("password", "pass");
-		int actualConnectionCheckTimeoutSeconds = 120;
+		properties.put("max-retry-timeout", "120");
 
 		// validation for source
 		DynamicTableSource actualSource = createTableSource(properties);
@@ -74,7 +73,7 @@ public class JdbcDynamicTableFactoryTest {
 			.setDriverName("org.apache.derby.jdbc.EmbeddedDriver")
 			.setUsername("user")
 			.setPassword("pass")
-			.setConnectionCheckTimeoutSeconds(actualConnectionCheckTimeoutSeconds)
+			.setConnectionCheckTimeoutSeconds(120)
 			.build();
 		JdbcLookupOptions lookupOptions = JdbcLookupOptions.builder()
 			.setCacheMaxSize(-1)
@@ -87,7 +86,6 @@ public class JdbcDynamicTableFactoryTest {
 			lookupOptions,
 			schema);
 		assertEquals(expectedSource, actualSource);
-		assertEquals(connectionCheckTimeoutSeconds,actualConnectionCheckTimeoutSeconds);
 
 		// validation for sink
 		DynamicTableSink actualSink = createTableSink(properties);

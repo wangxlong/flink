@@ -49,7 +49,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static org.apache.flink.connector.jdbc.internal.options.JdbcOptions.connectionCheckTimeoutSeconds;
 import static org.apache.flink.connector.jdbc.utils.JdbcUtils.setRecordToStatement;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
@@ -179,11 +178,9 @@ public class JdbcBatchingOutputFormat<In, JdbcIn, JdbcExec extends JdbcBatchStat
 					throw new IOException(e);
 				}
 				try {
-					if (!connection.isValid(connectionCheckTimeoutSeconds)) {
 						connection = connectionProvider.reestablishConnection();
 						jdbcStatementExecutor.closeStatements();
 						jdbcStatementExecutor.prepareStatements(connection);
-					}
 				} catch (Exception excpetion) {
 					LOG.error("JDBC connection is not valid, and reestablish connection failed.", excpetion);
 					throw new IOException("Reestablish JDBC connection failed", excpetion);

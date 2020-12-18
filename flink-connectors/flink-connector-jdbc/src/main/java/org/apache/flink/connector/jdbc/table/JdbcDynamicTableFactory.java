@@ -196,6 +196,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		final JdbcOptions.Builder builder = JdbcOptions.builder()
 			.setDBUrl(url)
 			.setTableName(readableConfig.get(TABLE_NAME))
+			.setConnectionCheckTimeoutSeconds((int) readableConfig.get(MAX_RETRY_TIMEOUT).toMillis())
 			.setDialect(JdbcDialects.get(url).get());
 
 		readableConfig.getOptional(DRIVER).ifPresent(builder::setDriverName);
@@ -290,9 +291,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 			USERNAME,
 			PASSWORD
 		});
-		checkAllOrNone(config, new ConfigOption[]{
-			MAX_RETRY_TIMEOUT
-		});
+
 		checkAllOrNone(config, new ConfigOption[]{
 			SCAN_PARTITION_COLUMN,
 			SCAN_PARTITION_NUM,
