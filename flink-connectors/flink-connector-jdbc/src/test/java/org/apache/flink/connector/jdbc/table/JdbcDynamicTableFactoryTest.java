@@ -312,12 +312,12 @@ public class JdbcDynamicTableFactoryTest {
 		// connection.max-retry-timeout should be positive
 		try {
 			Map<String, String> properties = getAllOptions();
-			properties.put("connection.max-retry-timeout", "0s");
+			properties.put("connection.max-retry-timeout", "100ms");
 			createTableSource(properties);
 			fail("exception expected");
 		} catch (Throwable t) {
 			assertTrue(ExceptionUtils.findThrowableWithMessage(t,
-				"The value of 'connection.max-retry-timeout' option should be positive, but is 0s.")
+				"The value of 'connection.max-retry-timeout' option must be in second granularity and larger than 1 second, but is 100ms.")
 				.isPresent());
 		}
 	}

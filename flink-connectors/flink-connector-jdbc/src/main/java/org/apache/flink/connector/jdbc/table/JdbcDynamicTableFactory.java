@@ -332,9 +332,9 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
 		if (config.get(MAX_RETRY_TIMEOUT).getSeconds() <= 0) {
 			throw new IllegalArgumentException(String.format(
-				"The value of '%s' option should be positive, but is %ss.",
+				"The value of '%s' option must be in second granularity and larger than 1 second, but is %s.",
 				MAX_RETRY_TIMEOUT.key(),
-				config.get(MAX_RETRY_TIMEOUT).getSeconds()));
+				config.get(ConfigOptions.key(MAX_RETRY_TIMEOUT.key()).stringType().noDefaultValue())));
 		}
 	}
 
