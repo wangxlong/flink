@@ -1655,7 +1655,7 @@ public class DescriptorProperties {
 						"Property '" + key + "' must be a " + typeName + " value between " + min + " and " + max + " but was: " + parsed);
 				}
 			} catch (Exception e) {
-				throw new ValidationException("Property '" + key + "' must be a " + typeName + " value but was: " + value);
+				throw new ValidationException("Property '" + key + "' must be a " + typeName + " value but was: " + value, e);
 			}
 		}
 	}

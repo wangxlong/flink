@@ -95,7 +95,7 @@ public class JdbcLookupFunction extends TableFunction<Row> {
 		this.dbURL = options.getDbURL();
 		this.username = options.getUsername().orElse(null);
 		this.password = options.getPassword().orElse(null);
-		this.connectionCheckTimeoutSeconds = options.getConnectionCheckTimeoutSeconds();
+		this.connectionCheckTimeoutSeconds = lookupOptions.getConnectionCheckTimeoutSeconds();
 		this.fieldNames = fieldNames;
 		this.fieldTypes = fieldTypes;
 		this.keyNames = keyNames;

@@ -43,8 +43,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
- * Test for {@link JdbcTableSource} and {@link JdbcUpsertTableSink} created
- * by {@link JdbcTableSourceSinkFactory}.
+ * Test for {@link JdbcDynamicTableSource} and {@link JdbcDynamicTableSink} created
+ * by {@link JdbcDynamicTableFactory}.
  */
 public class JdbcDynamicTableFactoryTest {
 
@@ -73,12 +73,12 @@ public class JdbcDynamicTableFactoryTest {
 			.setDriverName("org.apache.derby.jdbc.EmbeddedDriver")
 			.setUsername("user")
 			.setPassword("pass")
-			.setConnectionCheckTimeoutSeconds(120)
 			.build();
 		JdbcLookupOptions lookupOptions = JdbcLookupOptions.builder()
 			.setCacheMaxSize(-1)
 			.setCacheExpireMs(10_000)
 			.setMaxRetryTimes(3)
+			.setConnectionCheckTimeoutSeconds(120)
 			.build();
 		JdbcDynamicTableSource expectedSource = new JdbcDynamicTableSource(
 			options,
@@ -94,6 +94,7 @@ public class JdbcDynamicTableFactoryTest {
 			.withBatchSize(100)
 			.withBatchIntervalMs(1000)
 			.withMaxRetries(3)
+			.withConnectionCheckTimeoutSeconds(120)
 			.build();
 		JdbcDmlOptions dmlOptions = JdbcDmlOptions.builder()
 			.withTableName(options.getTableName())
@@ -309,7 +310,7 @@ public class JdbcDynamicTableFactoryTest {
 				.isPresent());
 		}
 
-		// connection.max-retry-timeout should be positive
+		// connection.max-retry-timeout should be greater than or equal to 1 second
 		try {
 			Map<String, String> properties = getAllOptions();
 			properties.put("connection.max-retry-timeout", "100ms");

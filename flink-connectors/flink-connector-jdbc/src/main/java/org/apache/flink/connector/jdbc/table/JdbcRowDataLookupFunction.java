@@ -97,7 +97,7 @@ public class JdbcRowDataLookupFunction extends TableFunction<RowData> {
 		this.username = options.getUsername().orElse(null);
 		this.password = options.getPassword().orElse(null);
 		this.keyNames = keyNames;
-		this.connectionCheckTimeoutSeconds = options.getConnectionCheckTimeoutSeconds();
+		this.connectionCheckTimeoutSeconds = lookupOptions.getConnectionCheckTimeoutSeconds();
 		List<String> nameList = Arrays.asList(fieldNames);
 		this.keyTypes = Arrays.stream(keyNames)
 			.map(s -> {

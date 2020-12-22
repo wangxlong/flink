@@ -47,6 +47,7 @@ import static org.apache.flink.table.descriptors.DescriptorProperties.WATERMARK;
 import static org.apache.flink.table.descriptors.DescriptorProperties.WATERMARK_ROWTIME;
 import static org.apache.flink.table.descriptors.DescriptorProperties.WATERMARK_STRATEGY_DATA_TYPE;
 import static org.apache.flink.table.descriptors.DescriptorProperties.WATERMARK_STRATEGY_EXPR;
+import static org.apache.flink.table.descriptors.JdbcValidator.CONNECTOR_CONNECTION_MAX_RETRY_TIMEOUT;
 import static org.apache.flink.table.descriptors.JdbcValidator.CONNECTOR_DRIVER;
 import static org.apache.flink.table.descriptors.JdbcValidator.CONNECTOR_LOOKUP_CACHE_MAX_ROWS;
 import static org.apache.flink.table.descriptors.JdbcValidator.CONNECTOR_LOOKUP_CACHE_TTL;
@@ -95,6 +96,7 @@ public class JdbcTableSourceSinkFactory implements
 		properties.add(CONNECTOR_TABLE);
 		properties.add(CONNECTOR_USERNAME);
 		properties.add(CONNECTOR_PASSWORD);
+		properties.add(CONNECTOR_CONNECTION_MAX_RETRY_TIMEOUT);
 
 		// scan options
 		properties.add(CONNECTOR_READ_QUERY);
@@ -219,6 +221,8 @@ public class JdbcTableSourceSinkFactory implements
 		descriptorProperties.getOptionalDuration(CONNECTOR_LOOKUP_CACHE_TTL).ifPresent(
 			s -> builder.setCacheExpireMs(s.toMillis()));
 		descriptorProperties.getOptionalInt(CONNECTOR_LOOKUP_MAX_RETRIES).ifPresent(builder::setMaxRetryTimes);
+		descriptorProperties.getOptionalDuration(CONNECTOR_CONNECTION_MAX_RETRY_TIMEOUT).ifPresent(
+			s -> builder.setConnectionCheckTimeoutSeconds((int) s.getSeconds()));
 
 		return builder.build();
 	}

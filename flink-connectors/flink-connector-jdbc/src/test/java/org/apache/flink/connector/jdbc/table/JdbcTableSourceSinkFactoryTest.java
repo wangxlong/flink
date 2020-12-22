@@ -33,6 +33,7 @@ import org.apache.flink.table.sources.TableSource;
 import org.apache.flink.table.sources.TableSourceValidation;
 import org.apache.flink.table.types.DataType;
 import org.apache.flink.table.types.logical.RowType;
+import org.apache.flink.util.ExceptionUtils;
 
 import org.junit.Test;
 
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -125,6 +127,7 @@ public class JdbcTableSourceSinkFactoryTest {
 		properties.put("connector.lookup.cache.max-rows", "1000");
 		properties.put("connector.lookup.cache.ttl", "10s");
 		properties.put("connector.lookup.max-retries", "10");
+		properties.put("connector.connection.max-retry-timeout", "150s");
 
 		final StreamTableSource<?> actual = TableFactoryService.find(StreamTableSourceFactory.class, properties)
 			.createStreamTableSource(properties);
@@ -137,6 +140,7 @@ public class JdbcTableSourceSinkFactoryTest {
 			.setCacheMaxSize(1000)
 			.setCacheExpireMs(10_000)
 			.setMaxRetryTimes(10)
+			.setConnectionCheckTimeoutSeconds(150)
 			.build();
 		final JdbcTableSource expected = JdbcTableSource.builder()
 			.setOptions(options)
@@ -254,6 +258,19 @@ public class JdbcTableSourceSinkFactoryTest {
 				.createStreamTableSource(properties);
 			fail("exception expected");
 		} catch (IllegalArgumentException ignored) {
+		}
+
+		// connection.max-retry-timeout should be greater than or equal to 1 second
+		try {
+			Map<String, String> properties = getBasicProperties();
+			properties.put("connector.connection.max-retry-timeout", "120ms");
+			TableFactoryService.find(StreamTableSourceFactory.class, properties)
+				.createStreamTableSource(properties);
+			fail("exception expected");
+		} catch (Throwable t) {
+			assertTrue(ExceptionUtils.findThrowableWithMessage(t,
+				"Duration for key 'connector.connection.max-retry-timeout' must be a multiple of 1000 milliseconds but was: 120ms")
+				.isPresent());
 		}
 	}
 

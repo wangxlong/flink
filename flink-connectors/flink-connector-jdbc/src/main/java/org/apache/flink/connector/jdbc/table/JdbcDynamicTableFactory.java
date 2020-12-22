@@ -80,6 +80,8 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		.noDefaultValue()
 		.withDescription("the class name of the JDBC driver to use to connect to this URL. " +
 			"If not set, it will automatically be derived from the URL.");
+
+	// common option for writing or lookup
 	public static final ConfigOption<Duration> MAX_RETRY_TIMEOUT = ConfigOptions
 		.key("connection.max-retry-timeout")
 		.durationType()
@@ -196,7 +198,6 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		final JdbcOptions.Builder builder = JdbcOptions.builder()
 			.setDBUrl(url)
 			.setTableName(readableConfig.get(TABLE_NAME))
-			.setConnectionCheckTimeoutSeconds((int) readableConfig.get(MAX_RETRY_TIMEOUT).getSeconds())
 			.setDialect(JdbcDialects.get(url).get());
 
 		readableConfig.getOptional(DRIVER).ifPresent(builder::setDriverName);
@@ -223,7 +224,8 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		return new JdbcLookupOptions(
 			readableConfig.get(LOOKUP_CACHE_MAX_ROWS),
 			readableConfig.get(LOOKUP_CACHE_TTL).toMillis(),
-			readableConfig.get(LOOKUP_MAX_RETRIES));
+			readableConfig.get(LOOKUP_MAX_RETRIES),
+			(int) readableConfig.get(MAX_RETRY_TIMEOUT).getSeconds());
 	}
 
 	private JdbcExecutionOptions getJdbcExecutionOptions(ReadableConfig config) {
@@ -231,6 +233,7 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		builder.withBatchSize(config.get(SINK_BUFFER_FLUSH_MAX_ROWS));
 		builder.withBatchIntervalMs(config.get(SINK_BUFFER_FLUSH_INTERVAL).toMillis());
 		builder.withMaxRetries(config.get(SINK_MAX_RETRIES));
+		builder.withConnectionCheckTimeoutSeconds((int) config.get(MAX_RETRY_TIMEOUT).getSeconds());
 		return builder.build();
 	}
 

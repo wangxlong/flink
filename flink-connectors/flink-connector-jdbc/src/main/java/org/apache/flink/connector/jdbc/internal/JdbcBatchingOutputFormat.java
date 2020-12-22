@@ -178,12 +178,14 @@ public class JdbcBatchingOutputFormat<In, JdbcIn, JdbcExec extends JdbcBatchStat
 					throw new IOException(e);
 				}
 				try {
+					if (!connection.isValid(executionOptions.getConnectionCheckTimeoutSeconds())) {
 						connection = connectionProvider.reestablishConnection();
 						jdbcStatementExecutor.closeStatements();
 						jdbcStatementExecutor.prepareStatements(connection);
-				} catch (Exception excpetion) {
-					LOG.error("JDBC connection is not valid, and reestablish connection failed.", excpetion);
-					throw new IOException("Reestablish JDBC connection failed", excpetion);
+					}
+				} catch (Exception exception) {
+					LOG.error("JDBC connection is not valid, and reestablish connection failed.", exception);
+					throw new IOException("Reestablish JDBC connection failed", exception);
 				}
 				try {
 					Thread.sleep(1000 * i);

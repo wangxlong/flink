@@ -31,16 +31,23 @@ public class JdbcExecutionOptions implements Serializable {
 	public static final int DEFAULT_MAX_RETRY_TIMES = 3;
 	private static final int DEFAULT_INTERVAL_MILLIS = 0;
 	public static final int DEFAULT_SIZE = 5000;
+	public static final int MAX_RETRY_TIMEOUT = 60;
 
 	private final long batchIntervalMs;
 	private final int batchSize;
 	private final int maxRetries;
+	private final int connectionCheckTimeoutSeconds;
 
-	private JdbcExecutionOptions(long batchIntervalMs, int batchSize, int maxRetries) {
+	private JdbcExecutionOptions(
+			long batchIntervalMs,
+			int batchSize,
+			int maxRetries,
+			int connectionCheckTimeoutSeconds) {
 		Preconditions.checkArgument(maxRetries >= 0);
 		this.batchIntervalMs = batchIntervalMs;
 		this.batchSize = batchSize;
 		this.maxRetries = maxRetries;
+		this.connectionCheckTimeoutSeconds = connectionCheckTimeoutSeconds;
 	}
 
 	public long getBatchIntervalMs() {
@@ -55,6 +62,10 @@ public class JdbcExecutionOptions implements Serializable {
 		return maxRetries;
 	}
 
+	public int getConnectionCheckTimeoutSeconds() {
+		return connectionCheckTimeoutSeconds;
+	}
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) {
@@ -66,12 +77,13 @@ public class JdbcExecutionOptions implements Serializable {
 		JdbcExecutionOptions that = (JdbcExecutionOptions) o;
 		return batchIntervalMs == that.batchIntervalMs &&
 			batchSize == that.batchSize &&
-			maxRetries == that.maxRetries;
+			maxRetries == that.maxRetries &&
+			connectionCheckTimeoutSeconds == that.connectionCheckTimeoutSeconds;
 	}
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(batchIntervalMs, batchSize, maxRetries);
+		return Objects.hash(batchIntervalMs, batchSize, maxRetries, connectionCheckTimeoutSeconds);
 	}
 
 	public static Builder builder() {
@@ -89,6 +101,7 @@ public class JdbcExecutionOptions implements Serializable {
 		private long intervalMs = DEFAULT_INTERVAL_MILLIS;
 		private int size = DEFAULT_SIZE;
 		private int maxRetries = DEFAULT_MAX_RETRY_TIMES;
+		private int connectionCheckTimeoutSeconds = MAX_RETRY_TIMEOUT;
 
 		public Builder withBatchSize(int size) {
 			this.size = size;
@@ -105,8 +118,13 @@ public class JdbcExecutionOptions implements Serializable {
 			return this;
 		}
 
+		public Builder withConnectionCheckTimeoutSeconds(int connectionCheckTimeoutSeconds) {
+			this.connectionCheckTimeoutSeconds = connectionCheckTimeoutSeconds;
+			return this;
+		}
+
 		public JdbcExecutionOptions build() {
-			return new JdbcExecutionOptions(intervalMs, size, maxRetries);
+			return new JdbcExecutionOptions(intervalMs, size, maxRetries, connectionCheckTimeoutSeconds);
 		}
 	}
 }
