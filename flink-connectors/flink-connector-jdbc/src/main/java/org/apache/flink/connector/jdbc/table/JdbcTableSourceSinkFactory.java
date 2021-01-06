@@ -184,6 +184,8 @@ public class JdbcTableSourceSinkFactory implements
 			.setTableName(descriptorProperties.getString(CONNECTOR_TABLE))
 			.setDialect(JdbcDialects.get(url).get());
 
+		descriptorProperties.getOptionalDuration(CONNECTOR_CONNECTION_MAX_RETRY_TIMEOUT).ifPresent(
+			s -> builder.setConnectionCheckTimeoutSeconds((int) s.getSeconds()));
 		descriptorProperties.getOptionalString(CONNECTOR_DRIVER).ifPresent(builder::setDriverName);
 		descriptorProperties.getOptionalString(CONNECTOR_USERNAME).ifPresent(builder::setUsername);
 		descriptorProperties.getOptionalString(CONNECTOR_PASSWORD).ifPresent(builder::setPassword);

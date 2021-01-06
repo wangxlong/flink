@@ -83,7 +83,7 @@ public class ExecutionCheckpointingOptions {
 		ConfigOptions.key("execution.checkpointing.tolerable-failed-checkpoints")
 			.intType()
 			.noDefaultValue()
-			.withDescription("The tolerable checkpoint failure number. If set to 0, that means" +
+			.withDescription("The tolerable checkpoint failure number. If set to 0, that means " +
 				"we do not tolerance any checkpoint failure.");
 
 	public static final ConfigOption<CheckpointConfig.ExternalizedCheckpointCleanup> EXTERNALIZED_CHECKPOINT =
@@ -145,7 +145,6 @@ public class ExecutionCheckpointingOptions {
 					TextElement.code(MAX_CONCURRENT_CHECKPOINTS.key()))
 				.build());
 
-	@Documentation.ExcludeFromDocumentation("Do not advertise this option until timeout in unaligned checkpoint is completed.")
 	public static final ConfigOption<Duration> ALIGNMENT_TIMEOUT =
 		ConfigOptions.key("execution.checkpointing.alignment-timeout")
 			.durationType()

@@ -73,6 +73,7 @@ public class JdbcDynamicTableFactoryTest {
 			.setDriverName("org.apache.derby.jdbc.EmbeddedDriver")
 			.setUsername("user")
 			.setPassword("pass")
+			.setConnectionCheckTimeoutSeconds(120)
 			.build();
 		JdbcLookupOptions lookupOptions = JdbcLookupOptions.builder()
 			.setCacheMaxSize(-1)
@@ -210,6 +211,39 @@ public class JdbcDynamicTableFactoryTest {
 	}
 
 	@Test
+	public void testJDBCSinkWithParallelism() {
+		Map<String, String> properties = getAllOptions();
+		properties.put("sink.parallelism", "2");
+
+		DynamicTableSink actual = createTableSink(properties);
+
+		JdbcOptions options = JdbcOptions.builder()
+			.setDBUrl("jdbc:derby:memory:mydb")
+			.setTableName("mytable")
+			.setParallelism(2)
+			.build();
+		JdbcExecutionOptions executionOptions = JdbcExecutionOptions.builder()
+			.withBatchSize(100)
+			.withBatchIntervalMs(1000)
+			.withMaxRetries(3)
+			.build();
+		JdbcDmlOptions dmlOptions = JdbcDmlOptions.builder()
+			.withTableName(options.getTableName())
+			.withDialect(options.getDialect())
+			.withFieldNames(schema.getFieldNames())
+			.withKeyFields("bbb", "aaa")
+			.build();
+
+		JdbcDynamicTableSink expected = new JdbcDynamicTableSink(
+			options,
+			executionOptions,
+			dmlOptions,
+			schema);
+
+		assertEquals(expected, actual);
+	}
+
+	@Test
 	public void testJdbcValidation() {
 		// only password, no username
 		try {
@@ -310,7 +344,11 @@ public class JdbcDynamicTableFactoryTest {
 				.isPresent());
 		}
 
+<<<<<<< HEAD
 		// connection.max-retry-timeout should be greater than or equal to 1 second
+=======
+		// connection.max-retry-timeout shouldn't be smaller than 1 second
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 		try {
 			Map<String, String> properties = getAllOptions();
 			properties.put("connection.max-retry-timeout", "100ms");
@@ -318,7 +356,11 @@ public class JdbcDynamicTableFactoryTest {
 			fail("exception expected");
 		} catch (Throwable t) {
 			assertTrue(ExceptionUtils.findThrowableWithMessage(t,
+<<<<<<< HEAD
 				"The value of 'connection.max-retry-timeout' option must be in second granularity and larger than 1 second, but is 100ms.")
+=======
+				"The value of 'connection.max-retry-timeout' option must be in second granularity and shouldn't be smaller than 1 second, but is 100ms.")
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 				.isPresent());
 		}
 	}

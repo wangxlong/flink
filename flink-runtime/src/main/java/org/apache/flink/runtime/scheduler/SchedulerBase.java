@@ -47,7 +47,6 @@ import org.apache.flink.runtime.executiongraph.ExecutionAttemptID;
 import org.apache.flink.runtime.executiongraph.ExecutionDeploymentListener;
 import org.apache.flink.runtime.executiongraph.ExecutionGraph;
 import org.apache.flink.runtime.executiongraph.ExecutionGraphBuilder;
-import org.apache.flink.runtime.executiongraph.ExecutionGraphException;
 import org.apache.flink.runtime.executiongraph.ExecutionJobVertex;
 import org.apache.flink.runtime.executiongraph.ExecutionStateUpdateListener;
 import org.apache.flink.runtime.executiongraph.ExecutionVertex;
@@ -686,19 +685,15 @@ public abstract class SchedulerBase implements SchedulerNG {
 	}
 
 	@Override
-	public final void scheduleOrUpdateConsumers(final ResultPartitionID partitionId) {
+	public final void notifyPartitionDataAvailable(final ResultPartitionID partitionId) {
 		mainThreadExecutor.assertRunningInMainThread();
 
-		try {
-			executionGraph.scheduleOrUpdateConsumers(partitionId);
-		} catch (ExecutionGraphException e) {
-			throw new RuntimeException(e);
-		}
+		executionGraph.notifyPartitionDataAvailable(partitionId);
 
-		scheduleOrUpdateConsumersInternal(partitionId.getPartitionId());
+		notifyPartitionDataAvailableInternal(partitionId.getPartitionId());
 	}
 
-	protected void scheduleOrUpdateConsumersInternal(IntermediateResultPartitionID resultPartitionId) {
+	protected void notifyPartitionDataAvailableInternal(IntermediateResultPartitionID resultPartitionId) {
 	}
 
 	@Override

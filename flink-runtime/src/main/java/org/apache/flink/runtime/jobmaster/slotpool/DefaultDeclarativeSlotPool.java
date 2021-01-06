@@ -19,6 +19,7 @@
 package org.apache.flink.runtime.jobmaster.slotpool;
 
 import org.apache.flink.annotation.VisibleForTesting;
+import org.apache.flink.api.common.JobID;
 import org.apache.flink.api.common.time.Time;
 import org.apache.flink.runtime.clusterframework.types.AllocationID;
 import org.apache.flink.runtime.clusterframework.types.ResourceID;
@@ -78,6 +79,7 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 	private final Time idleSlotTimeout;
 	private final Time rpcTimeout;
 
+	private final JobID jobId;
 	private final AllocatedSlotPool slotPool;
 
 	private final Map<AllocationID, ResourceProfile> slotToRequirementProfileMappings;
@@ -89,12 +91,14 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 	private final RequirementMatcher requirementMatcher = new DefaultRequirementMatcher();
 
 	public DefaultDeclarativeSlotPool(
+		JobID jobId,
 		AllocatedSlotPool slotPool,
 		Consumer<? super Collection<ResourceRequirement>> notifyNewResourceRequirements,
 		Consumer<? super Collection<? extends PhysicalSlot>> notifyNewSlots,
 		Time idleSlotTimeout,
 		Time rpcTimeout) {
 
+		this.jobId = jobId;
 		this.slotPool = slotPool;
 		this.notifyNewResourceRequirements = notifyNewResourceRequirements;
 		this.notifyNewSlots = notifyNewSlots;
@@ -107,6 +111,9 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 
 	@Override
 	public void increaseResourceRequirementsBy(ResourceCounter increment) {
+		if (increment.isEmpty()) {
+			return;
+		}
 		totalResourceRequirements = totalResourceRequirements.add(increment);
 
 		declareResourceRequirements();
@@ -114,13 +121,19 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 
 	@Override
 	public void decreaseResourceRequirementsBy(ResourceCounter decrement) {
+		if (decrement.isEmpty()) {
+			return;
+		}
 		totalResourceRequirements = totalResourceRequirements.subtract(decrement);
 
 		declareResourceRequirements();
 	}
 
 	private void declareResourceRequirements() {
-		notifyNewResourceRequirements.accept(getResourceRequirements());
+		final Collection<ResourceRequirement> resourceRequirements = getResourceRequirements();
+
+		LOG.debug("Declare new resource requirements for job {}.{}\trequired resources: {}{}\tacquired resources: {}", jobId, System.lineSeparator(), resourceRequirements, System.lineSeparator(), fulfilledResourceRequirements);
+		notifyNewResourceRequirements.accept(resourceRequirements);
 	}
 
 	@Override
@@ -154,6 +167,8 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 				if (acceptedSlot.isPresent()) {
 					acceptedSlotOffers.add(offer);
 					acceptedSlots.add(acceptedSlot.get());
+				} else {
+					LOG.debug("Could not match offer {} to any outstanding requirement.", offer.getAllocationId());
 				}
 			}
 		}
@@ -161,6 +176,7 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 		slotPool.addSlots(acceptedSlots, currentTime);
 
 		if (!acceptedSlots.isEmpty()) {
+			LOG.debug("Acquired new resources; new total acquired resources: {}", fulfilledResourceRequirements);
 			notifyNewSlots.accept(acceptedSlots);
 		}
 
@@ -256,15 +272,10 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 
 		freedSlot.ifPresent(allocatedSlot -> {
 			releasePayload(Collections.singleton(allocatedSlot), cause);
-			tryToFulfillResourceRequirement(allocatedSlot);
 			notifyNewSlots.accept(Collections.singletonList(allocatedSlot));
 		});
 
 		return previouslyFulfilledRequirement.orElseGet(ResourceCounter::empty);
-	}
-
-	private void tryToFulfillResourceRequirement(AllocatedSlot allocatedSlot) {
-		matchOfferWithOutstandingRequirements(allocatedSlotToSlotOffer(allocatedSlot), allocatedSlot.getTaskManagerLocation(), allocatedSlot.getTaskManagerGateway());
 	}
 
 	private void updateSlotToRequirementProfileMapping(AllocationID allocationId, ResourceProfile matchedResourceProfile) {
@@ -280,11 +291,6 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 		// be able to fulfill the total requirements
 		decreaseResourceRequirementsBy(ResourceCounter.withResource(newResourceProfile, 1));
 		increaseResourceRequirementsBy(ResourceCounter.withResource(oldResourceProfile, 1));
-	}
-
-	@Nonnull
-	private SlotOffer allocatedSlotToSlotOffer(AllocatedSlot allocatedSlot) {
-		return new SlotOffer(allocatedSlot.getAllocationId(), allocatedSlot.getPhysicalSlotNumber(), allocatedSlot.getResourceProfile());
 	}
 
 	@Override
@@ -346,6 +352,7 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 		}
 
 		releaseSlots(slotsToReturnToOwner, new FlinkException("Returning idle slots to their owners."));
+		LOG.debug("Idle slots have been returned; new total acquired resources: {}", fulfilledResourceRequirements);
 	}
 
 	private void releaseSlots(Iterable<AllocatedSlot> slotsToReturnToOwner, Throwable cause) {
@@ -408,33 +415,5 @@ public class DefaultDeclarativeSlotPool implements DeclarativeSlotPool {
 	@VisibleForTesting
 	ResourceCounter getFulfilledResourceRequirements() {
 		return fulfilledResourceRequirements;
-	}
-
-	private static final class SlotOfferMatching {
-		private final SlotOffer slotOffer;
-
-		@Nullable
-		private final ResourceProfile matching;
-
-		private SlotOfferMatching(SlotOffer slotOffer, @Nullable ResourceProfile matching) {
-			this.slotOffer = slotOffer;
-			this.matching = matching;
-		}
-
-		private SlotOffer getSlotOffer() {
-			return slotOffer;
-		}
-
-		private Optional<ResourceProfile> getMatching() {
-			return Optional.ofNullable(matching);
-		}
-
-		private static SlotOfferMatching createMatching(SlotOffer slotOffer, ResourceProfile matching) {
-			return new SlotOfferMatching(slotOffer, matching);
-		}
-
-		private static SlotOfferMatching createMismatch(SlotOffer slotOffer) {
-			return new SlotOfferMatching(slotOffer, null);
-		}
 	}
 }

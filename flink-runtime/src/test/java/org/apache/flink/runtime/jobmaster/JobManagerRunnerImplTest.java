@@ -19,6 +19,7 @@
 package org.apache.flink.runtime.jobmaster;
 
 import org.apache.flink.api.common.JobStatus;
+import org.apache.flink.core.testutils.FlinkMatchers;
 import org.apache.flink.core.testutils.OneShotLatch;
 import org.apache.flink.runtime.checkpoint.StandaloneCheckpointRecoveryFactory;
 import org.apache.flink.runtime.execution.librarycache.LibraryCacheManager;
@@ -31,14 +32,13 @@ import org.apache.flink.runtime.jobmaster.factories.JobMasterServiceFactory;
 import org.apache.flink.runtime.jobmaster.factories.TestingJobMasterServiceFactory;
 import org.apache.flink.runtime.leaderelection.TestingLeaderElectionService;
 import org.apache.flink.runtime.leaderretrieval.SettableLeaderRetrievalService;
-import org.apache.flink.runtime.messages.Acknowledge;
 import org.apache.flink.runtime.rest.handler.legacy.utils.ArchivedExecutionGraphBuilder;
 import org.apache.flink.runtime.testingUtils.TestingUtils;
 import org.apache.flink.runtime.testtasks.NoOpInvokable;
 import org.apache.flink.runtime.util.TestingFatalErrorHandler;
-import org.apache.flink.util.ExceptionUtils;
-import org.apache.flink.util.TestLogger;
 import org.apache.flink.runtime.util.TestingUserCodeClassLoader;
+import org.apache.flink.util.FlinkException;
+import org.apache.flink.util.TestLogger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -49,15 +49,15 @@ import org.junit.rules.TemporaryFolder;
 
 import javax.annotation.Nonnull;
 
+import java.time.Duration;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -117,13 +117,14 @@ public class JobManagerRunnerImplTest extends TestLogger {
 		try {
 			jobManagerRunner.start();
 
-			final CompletableFuture<ArchivedExecutionGraph> resultFuture = jobManagerRunner.getResultFuture();
+			final CompletableFuture<JobManagerRunnerResult> resultFuture = jobManagerRunner.getResultFuture();
 
 			assertThat(resultFuture.isDone(), is(false));
 
 			jobManagerRunner.jobReachedGloballyTerminalState(archivedExecutionGraph);
 
-			assertThat(resultFuture.get(), is(archivedExecutionGraph));
+			final JobManagerRunnerResult jobManagerRunnerResult = resultFuture.get();
+			assertThat(jobManagerRunnerResult, is(JobManagerRunnerResult.forSuccess(archivedExecutionGraph)));
 		} finally {
 			jobManagerRunner.close();
 		}
@@ -136,18 +137,15 @@ public class JobManagerRunnerImplTest extends TestLogger {
 		try {
 			jobManagerRunner.start();
 
-			final CompletableFuture<ArchivedExecutionGraph> resultFuture = jobManagerRunner.getResultFuture();
+			final CompletableFuture<JobManagerRunnerResult> resultFuture = jobManagerRunner.getResultFuture();
 
 			assertThat(resultFuture.isDone(), is(false));
 
 			jobManagerRunner.jobFinishedByOther();
 
-			try {
-				resultFuture.get();
-				fail("Should have failed.");
-			} catch (ExecutionException ee) {
-				assertThat(ExceptionUtils.stripExecutionException(ee), instanceOf(JobNotFinishedException.class));
-			}
+			final JobManagerRunnerResult jobManagerRunnerResult = resultFuture.get();
+
+			assertTrue(jobManagerRunnerResult.isJobNotFinished());
 		} finally {
 			jobManagerRunner.close();
 		}
@@ -160,18 +158,15 @@ public class JobManagerRunnerImplTest extends TestLogger {
 		try {
 			jobManagerRunner.start();
 
-			final CompletableFuture<ArchivedExecutionGraph> resultFuture = jobManagerRunner.getResultFuture();
+			final CompletableFuture<JobManagerRunnerResult> resultFuture = jobManagerRunner.getResultFuture();
 
 			assertThat(resultFuture.isDone(), is(false));
 
 			jobManagerRunner.closeAsync();
 
-			try {
-				resultFuture.get();
-				fail("Should have failed.");
-			} catch (ExecutionException ee) {
-				assertThat(ExceptionUtils.stripExecutionException(ee), instanceOf(JobNotFinishedException.class));
-			}
+			final JobManagerRunnerResult jobManagerRunnerResult = resultFuture.join();
+
+			assertTrue(jobManagerRunnerResult.isJobNotFinished());
 		} finally {
 			jobManagerRunner.close();
 		}
@@ -209,13 +204,13 @@ public class JobManagerRunnerImplTest extends TestLogger {
 	 * (granting or revoking leadership) to finish before starting a new leadership operation.
 	 */
 	@Test
-	public void testConcurrentLeadershipOperationsBlockingSuspend() throws Exception {
-		final CompletableFuture<Acknowledge> suspendedFuture = new CompletableFuture<>();
+	public void testConcurrentLeadershipOperationsBlockingClose() throws Exception {
+		final CompletableFuture<Void> terminationFuture = new CompletableFuture<>();
 
 		TestingJobMasterServiceFactory jobMasterServiceFactory = new TestingJobMasterServiceFactory(
 			() -> new TestingJobMasterService(
 				"localhost",
-				e -> suspendedFuture));
+				terminationFuture));
 		JobManagerRunner jobManagerRunner = createJobManagerRunner(jobMasterServiceFactory);
 
 		jobManagerRunner.start();
@@ -236,49 +231,28 @@ public class JobManagerRunnerImplTest extends TestLogger {
 			// expected
 		}
 
-		suspendedFuture.complete(Acknowledge.get());
+		terminationFuture.complete(null);
 
 		leaderFuture.get();
 	}
 
-	/**
-	 * Tests that the {@link JobManagerRunnerImpl} always waits for the previous leadership operation
-	 * (granting or revoking leadership) to finish before starting a new leadership operation.
-	 */
 	@Test
-	public void testConcurrentLeadershipOperationsBlockingGainLeadership() throws Exception {
-		final CompletableFuture<Exception> suspendFuture = new CompletableFuture<>();
-		final CompletableFuture<Acknowledge> startFuture = new CompletableFuture<>();
+	public void testJobMasterServiceTerminatesUnexpectedlyTriggersFailure() throws Exception {
+		final CompletableFuture<Void> terminationFuture = new CompletableFuture<>();
 
 		TestingJobMasterServiceFactory jobMasterServiceFactory = new TestingJobMasterServiceFactory(
 			() -> new TestingJobMasterService(
 				"localhost",
-				e -> {
-					suspendFuture.complete(e);
-					return CompletableFuture.completedFuture(Acknowledge.get());
-				},
-				ignored -> startFuture));
+				terminationFuture));
 		JobManagerRunner jobManagerRunner = createJobManagerRunner(jobMasterServiceFactory);
 
 		jobManagerRunner.start();
 
-		leaderElectionService.isLeader(UUID.randomUUID());
+		leaderElectionService.isLeader(UUID.randomUUID()).get();
 
-		leaderElectionService.notLeader();
+		terminationFuture.completeExceptionally(new FlinkException("The JobMasterService failed unexpectedly."));
 
-		// suspending should wait for the start to happen first
-		assertThat(suspendFuture.isDone(), is(false));
-
-		try {
-			suspendFuture.get(1L, TimeUnit.MILLISECONDS);
-			fail("Suspended leadership even though the JobMaster has not been started.");
-		} catch (TimeoutException expected) {
-			// expected
-		}
-
-		startFuture.complete(Acknowledge.get());
-
-		suspendFuture.get();
+		assertThat(jobManagerRunner.getResultFuture(), FlinkMatchers.futureWillCompleteExceptionally(Duration.ofSeconds(10L)));
 	}
 
 	@Nonnull

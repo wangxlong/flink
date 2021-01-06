@@ -80,6 +80,11 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		.noDefaultValue()
 		.withDescription("the class name of the JDBC driver to use to connect to this URL. " +
 			"If not set, it will automatically be derived from the URL.");
+	public static final ConfigOption<Duration> MAX_RETRY_TIMEOUT = ConfigOptions
+		.key("connection.max-retry-timeout")
+		.durationType()
+		.defaultValue(Duration.ofSeconds(60))
+		.withDescription("Maximum timeout between retries.");
 
 	// common option for writing or lookup
 	public static final ConfigOption<Duration> MAX_RETRY_TIMEOUT = ConfigOptions
@@ -198,7 +203,9 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		final JdbcOptions.Builder builder = JdbcOptions.builder()
 			.setDBUrl(url)
 			.setTableName(readableConfig.get(TABLE_NAME))
-			.setDialect(JdbcDialects.get(url).get());
+			.setDialect(JdbcDialects.get(url).get())
+			.setParallelism(readableConfig.getOptional(FactoryUtil.SINK_PARALLELISM).orElse(null))
+			.setConnectionCheckTimeoutSeconds((int) readableConfig.get(MAX_RETRY_TIMEOUT).getSeconds());
 
 		readableConfig.getOptional(DRIVER).ifPresent(builder::setDriverName);
 		readableConfig.getOptional(USERNAME).ifPresent(builder::setUsername);
@@ -281,6 +288,10 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 		optionalOptions.add(SINK_BUFFER_FLUSH_MAX_ROWS);
 		optionalOptions.add(SINK_BUFFER_FLUSH_INTERVAL);
 		optionalOptions.add(SINK_MAX_RETRIES);
+<<<<<<< HEAD
+=======
+		optionalOptions.add(FactoryUtil.SINK_PARALLELISM);
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 		optionalOptions.add(MAX_RETRY_TIMEOUT);
 		return optionalOptions;
 	}
@@ -335,7 +346,11 @@ public class JdbcDynamicTableFactory implements DynamicTableSourceFactory, Dynam
 
 		if (config.get(MAX_RETRY_TIMEOUT).getSeconds() <= 0) {
 			throw new IllegalArgumentException(String.format(
+<<<<<<< HEAD
 				"The value of '%s' option must be in second granularity and larger than 1 second, but is %s.",
+=======
+				"The value of '%s' option must be in second granularity and shouldn't be smaller than 1 second, but is %s.",
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 				MAX_RETRY_TIMEOUT.key(),
 				config.get(ConfigOptions.key(MAX_RETRY_TIMEOUT.key()).stringType().noDefaultValue())));
 		}

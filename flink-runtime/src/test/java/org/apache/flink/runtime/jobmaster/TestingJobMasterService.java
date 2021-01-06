@@ -19,13 +19,12 @@
 package org.apache.flink.runtime.jobmaster;
 
 import org.apache.flink.runtime.jobmaster.utils.TestingJobMasterGatewayBuilder;
-import org.apache.flink.runtime.messages.Acknowledge;
 import org.apache.flink.util.Preconditions;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
 
 /**
  * Implementation of the {@link JobMasterService} for testing purposes.
@@ -35,43 +34,33 @@ public class TestingJobMasterService implements JobMasterService {
 	@Nonnull
 	private final String address;
 
-	@Nonnull
-	private final Function<Exception, CompletableFuture<Acknowledge>> suspendFunction;
+	private final JobMasterGateway jobMasterGateway;
 
-	@Nonnull
-	private final Function<JobMasterId, CompletableFuture<Acknowledge>> startFunction;
+	private final CompletableFuture<Void> terminationFuture;
 
-	private JobMasterGateway jobMasterGateway;
-
-	public TestingJobMasterService(@Nonnull String address, @Nonnull Function<Exception, CompletableFuture<Acknowledge>> suspendFunction) {
-		this(address, suspendFunction, ignored -> CompletableFuture.completedFuture(Acknowledge.get()));
-	}
+	private final boolean completeTerminationFutureOnCloseAsync;
 
 	public TestingJobMasterService(
-		@Nonnull String address,
-		@Nonnull Function<Exception, CompletableFuture<Acknowledge>> suspendFunction,
-		@Nonnull Function<JobMasterId, CompletableFuture<Acknowledge>> startFunction) {
+			@Nonnull String address,
+			@Nullable CompletableFuture<Void> terminationFuture) {
 		this.address = address;
-		this.suspendFunction = suspendFunction;
-		this.startFunction = startFunction;
+
+		jobMasterGateway = new TestingJobMasterGatewayBuilder().build();
+
+		if (terminationFuture == null) {
+			this.terminationFuture = new CompletableFuture<>();
+			this.completeTerminationFutureOnCloseAsync = true;
+		} else {
+			this.terminationFuture = terminationFuture;
+			this.completeTerminationFutureOnCloseAsync = false;
+		}
+
 	}
 
 	public TestingJobMasterService() {
 		this(
 			"localhost",
-			e -> CompletableFuture.completedFuture(Acknowledge.get()));
-	}
-
-	@Override
-	public CompletableFuture<Acknowledge> start(JobMasterId jobMasterId) {
-			jobMasterGateway = new TestingJobMasterGatewayBuilder().build();
-			return startFunction.apply(jobMasterId);
-	}
-
-	@Override
-	public CompletableFuture<Acknowledge> suspend(Exception cause) {
-		jobMasterGateway = null;
-		return suspendFunction.apply(cause);
+			null);
 	}
 
 	@Override
@@ -86,8 +75,16 @@ public class TestingJobMasterService implements JobMasterService {
 	}
 
 	@Override
+	public CompletableFuture<Void> getTerminationFuture() {
+		return terminationFuture;
+	}
+
+	@Override
 	public CompletableFuture<Void> closeAsync() {
-		jobMasterGateway = null;
-		return CompletableFuture.completedFuture(null);
+		if (completeTerminationFutureOnCloseAsync) {
+			terminationFuture.complete(null);
+		}
+
+		return terminationFuture;
 	}
 }

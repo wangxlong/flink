@@ -178,7 +178,11 @@ public class JdbcBatchingOutputFormat<In, JdbcIn, JdbcExec extends JdbcBatchStat
 					throw new IOException(e);
 				}
 				try {
+<<<<<<< HEAD
 					if (!connection.isValid(executionOptions.getConnectionCheckTimeoutSeconds())) {
+=======
+					if (!connectionProvider.isConnectionValid()){
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 						connection = connectionProvider.reestablishConnection();
 						jdbcStatementExecutor.closeStatements();
 						jdbcStatementExecutor.prepareStatements(connection);

@@ -29,7 +29,7 @@ import org.apache.flink.util.TestLogger;
 
 import org.junit.Test;
 
-import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
@@ -37,11 +37,11 @@ import static org.junit.Assert.fail;
 public class ExecutionGraphVariousFailuesTest extends TestLogger {
 
 	/**
-	 * Tests that a failing scheduleOrUpdateConsumers call with a non-existing execution attempt
+	 * Tests that a failing notifyPartitionDataAvailable call with a non-existing execution attempt
 	 * id, will not fail the execution graph.
 	 */
 	@Test
-	public void testFailingScheduleOrUpdateConsumers() throws Exception {
+	public void testFailingNotifyPartitionDataAvailable() throws Exception {
 		final SchedulerBase scheduler = SchedulerTestingUtils.newSchedulerBuilder(new JobGraph()).build();
 		scheduler.initialize(ComponentMainThreadExecutorServiceAdapter.forMainThread());
 		scheduler.startScheduling();
@@ -55,15 +55,15 @@ public class ExecutionGraphVariousFailuesTest extends TestLogger {
 		ExecutionAttemptID producerId = new ExecutionAttemptID();
 		ResultPartitionID resultPartitionId = new ResultPartitionID(intermediateResultPartitionId, producerId);
 
-		// The execution attempt id does not exist and thus the scheduleOrUpdateConsumers call
+		// The execution attempt id does not exist and thus the notifyPartitionDataAvailable call
 		// should fail
 
 		try {
-			scheduler.scheduleOrUpdateConsumers(resultPartitionId);
-			fail("Expected ExecutionGraphException.");
-		} catch (RuntimeException e) {
+			scheduler.notifyPartitionDataAvailable(resultPartitionId);
+			fail("Error expected.");
+		} catch (IllegalStateException e) {
 			// we've expected this exception to occur
-			assertThat(e.getCause(), instanceOf(ExecutionGraphException.class));
+			assertThat(e.getMessage(), containsString("Cannot find execution for execution Id"));
 		}
 
 		assertEquals(JobStatus.RUNNING, eg.getState());

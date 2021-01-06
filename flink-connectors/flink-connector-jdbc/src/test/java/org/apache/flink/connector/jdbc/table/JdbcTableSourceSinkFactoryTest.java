@@ -23,6 +23,7 @@ import org.apache.flink.connector.jdbc.internal.options.JdbcOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcReadOptions;
 import org.apache.flink.table.api.DataTypes;
 import org.apache.flink.table.api.TableSchema;
+import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.descriptors.DescriptorProperties;
 import org.apache.flink.table.factories.StreamTableSinkFactory;
 import org.apache.flink.table.factories.StreamTableSourceFactory;
@@ -66,6 +67,7 @@ public class JdbcTableSourceSinkFactoryTest {
 		properties.put("connector.driver", "org.apache.derby.jdbc.EmbeddedDriver");
 		properties.put("connector.username", "user");
 		properties.put("connector.password", "pass");
+		properties.put("connector.connection.max-retry-timeout", "120s");
 
 		final StreamTableSource<?> actual = TableFactoryService.find(StreamTableSourceFactory.class, properties)
 			.createStreamTableSource(properties);
@@ -76,6 +78,7 @@ public class JdbcTableSourceSinkFactoryTest {
 			.setDriverName("org.apache.derby.jdbc.EmbeddedDriver")
 			.setUsername("user")
 			.setPassword("pass")
+			.setConnectionCheckTimeoutSeconds(120)
 			.build();
 		final JdbcTableSource expected = JdbcTableSource.builder()
 			.setOptions(options)
@@ -260,6 +263,7 @@ public class JdbcTableSourceSinkFactoryTest {
 		} catch (IllegalArgumentException ignored) {
 		}
 
+<<<<<<< HEAD
 		// connection.max-retry-timeout should be greater than or equal to 1 second
 		try {
 			Map<String, String> properties = getBasicProperties();
@@ -271,6 +275,28 @@ public class JdbcTableSourceSinkFactoryTest {
 			assertTrue(ExceptionUtils.findThrowableWithMessage(t,
 				"Duration for key 'connector.connection.max-retry-timeout' must be a multiple of 1000 milliseconds but was: 120ms")
 				.isPresent());
+=======
+		// lookup max-retries property less than zero
+		try {
+			Map<String, String> properties = getBasicProperties();
+			properties.put("connector.lookup.max-retries", "-1");
+
+			TableFactoryService.find(StreamTableSourceFactory.class, properties)
+				.createStreamTableSource(properties);
+			fail("exception expected");
+		} catch (ValidationException ignored) {
+		}
+
+		// connection.max-retry-timeout property is smaller than 1 second
+		try {
+			Map<String, String> properties = getBasicProperties();
+			properties.put("connector.connection.max-retry-timeout", "100ms");
+
+			TableFactoryService.find(StreamTableSourceFactory.class, properties)
+				.createStreamTableSource(properties);
+			fail("exception expected");
+		} catch (ValidationException ignored) {
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 		}
 	}
 

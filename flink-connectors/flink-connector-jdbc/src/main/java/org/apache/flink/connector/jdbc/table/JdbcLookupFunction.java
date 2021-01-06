@@ -95,7 +95,11 @@ public class JdbcLookupFunction extends TableFunction<Row> {
 		this.dbURL = options.getDbURL();
 		this.username = options.getUsername().orElse(null);
 		this.password = options.getPassword().orElse(null);
+<<<<<<< HEAD
 		this.connectionCheckTimeoutSeconds = lookupOptions.getConnectionCheckTimeoutSeconds();
+=======
+		this.connectionCheckTimeoutSeconds = options.getConnectionCheckTimeoutSeconds();
+>>>>>>> 41ce4490c91979e9ec1e28f975439c29e545e48a
 		this.fieldNames = fieldNames;
 		this.fieldTypes = fieldTypes;
 		this.keyNames = keyNames;
@@ -148,7 +152,7 @@ public class JdbcLookupFunction extends TableFunction<Row> {
 			}
 		}
 
-		for (int retry = 1; retry <= maxRetryTimes; retry++) {
+		for (int retry = 0; retry <= maxRetryTimes; retry++) {
 			try {
 				statement.clearParameters();
 				for (int i = 0; i < keys.length; i++) {
@@ -206,6 +210,12 @@ public class JdbcLookupFunction extends TableFunction<Row> {
 	}
 
 	private void establishConnectionAndStatement() throws SQLException, ClassNotFoundException {
+		// Load DriverManager first to avoid deadlock between DriverManager's
+		// static initialization block and specific driver class's static
+		// initialization block.
+		//
+		// See comments in SimpleJdbcConnectionProvider for more details.
+		DriverManager.getDrivers();
 		Class.forName(drivername);
 		if (username == null) {
 			dbConn = DriverManager.getConnection(dbURL);
