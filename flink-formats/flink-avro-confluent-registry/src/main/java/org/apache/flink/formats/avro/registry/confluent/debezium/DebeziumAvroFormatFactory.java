@@ -61,27 +61,7 @@ public class DebeziumAvroFormatFactory
         FactoryUtil.validateFactoryOptions(this, formatOptions);
         String schemaRegistryURL = formatOptions.get(SCHEMA_REGISTRY_URL);
 
-        return new DecodingFormat<DeserializationSchema<RowData>>() {
-            @Override
-            public DeserializationSchema<RowData> createRuntimeDecoder(
-                    DynamicTableSource.Context context, DataType producedDataType) {
-                final RowType rowType = (RowType) producedDataType.getLogicalType();
-                final TypeInformation<RowData> producedTypeInfo =
-                        context.createTypeInformation(producedDataType);
-                return new DebeziumAvroDeserializationSchema(
-                        rowType, producedTypeInfo, schemaRegistryURL);
-            }
-
-            @Override
-            public ChangelogMode getChangelogMode() {
-                return ChangelogMode.newBuilder()
-                        .addContainedKind(RowKind.INSERT)
-                        .addContainedKind(RowKind.UPDATE_BEFORE)
-                        .addContainedKind(RowKind.UPDATE_AFTER)
-                        .addContainedKind(RowKind.DELETE)
-                        .build();
-            }
-        };
+        return new DebeziumAvroDecodingFormat(schemaRegistryURL);
     }
 
     @Override

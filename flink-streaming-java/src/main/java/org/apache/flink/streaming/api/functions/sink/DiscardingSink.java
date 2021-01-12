@@ -31,5 +31,7 @@ public class DiscardingSink<T> implements SinkFunction<T> {
     private static final long serialVersionUID = 1L;
 
     @Override
-    public void invoke(T value) {}
+    public void invoke(T value) {
+        System.out.println(value);
+    }
 }

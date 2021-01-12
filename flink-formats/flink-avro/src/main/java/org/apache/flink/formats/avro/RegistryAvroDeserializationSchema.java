@@ -19,9 +19,16 @@
 package org.apache.flink.formats.avro;
 
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.specific.SpecificData;
+import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificRecord;
+
+import org.apache.flink.formats.avro.typeutils.AvroFactory;
+import org.apache.flink.formats.avro.utils.MutableByteArrayInputStream;
 
 import javax.annotation.Nullable;
 

@@ -41,10 +41,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.apache.flink.table.types.utils.TypeConversions.fromLogicalToDataType;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
@@ -70,7 +72,10 @@ public class DebeziumAvroFormatFactoryTest extends TestLogger {
 
         DebeziumAvroDeserializationSchema expectedDeser =
                 new DebeziumAvroDeserializationSchema(
-                        ROW_TYPE, InternalTypeInfo.of(ROW_TYPE), REGISTRY_URL);
+                        fromLogicalToDataType(ROW_TYPE),
+                        InternalTypeInfo.of(ROW_TYPE),
+                        Collections.emptyList(),
+                        REGISTRY_URL);
         DeserializationSchema<RowData> actualDeser = createDeserializationSchema(options);
         assertEquals(expectedDeser, actualDeser);
 

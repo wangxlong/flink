@@ -473,14 +473,14 @@ public class HiveCatalogITCase {
         tableEnv.executeSql("insert into dest select * from src").await();
 
         tableEnv.executeSql(
-                "create temporary table datagen(i int) with ("
+                "create temporary table datagen(i int, price DECIMAL(32, 2)) with ("
                         + "'connector'='datagen',"
                         + "'rows-per-second'='5',"
                         + "'fields.i.kind'='sequence',"
                         + "'fields.i.start'='1',"
                         + "'fields.i.end'='10')");
         tableEnv.executeSql(
-                "create temporary table blackhole(i int) with ('connector'='blackhole')");
+                "create temporary table blackhole(i int, price DECIMAL(32, 2)) with ('connector'='blackhole')");
         tableEnv.executeSql("insert into blackhole select * from datagen").await();
     }
 }
